@@ -7,42 +7,47 @@ var generateAvatarName = function (i) {
   var avatarPattern = 'img/avatars/user{{xx}}.png';
   return avatarPattern.replace(TEMPLATE_REPLACEMENT, '0' + i);
 };
+
+var generateRangeRandomValue = function (min, max) {
+  return Math.floor(Math.random() * (max - min + 1) + min);
+};
+
 var generateRentObjects = function () {
   var result = [];
   for (var i = 0; i < MAX_RENT_OBJECT; i++) {
-    var x =
-      result.push({
-        'author': {
-          'avatar': generateAvatarName(i + 1),
-        },
-        'offer': {
-          'title': 'Offer',
-          'address': '',
-          'price': '',
-          'type': '',
-          'rooms': '',
-          'guests': '',
-          'checkin': '',
-          'checkout': '',
-          'features': '',
-          'description': '',
-          'photos': '',
-        },
-        'location': {
-          'x': 100,
-          'y': 100,
-        },
-      });
+
+    result.push({
+      'author': {
+        'avatar': generateAvatarName(i + 1),
+      },
+      'offer': {
+        'title': 'Offer',
+        'address': '',
+        'price': '',
+        'type': '',
+        'rooms': '',
+        'guests': '',
+        'checkin': '',
+        'checkout': '',
+        'features': '',
+        'description': '',
+        'photos': '',
+      },
+      'location': {
+        'x': generateRangeRandomValue(100, 700),
+        'y': generateRangeRandomValue(130, 630),
+      },
+    });
   }
   return result;
 };
 
 var createRentObjectElement = function (rentObject) {
-  var templateRentObject = document.querySelector('#pin')
-    .content
-    .querySelector('.map__pin');
+  var templateRentObject = document.querySelector('#pin').content;
   var rentObjectElement = templateRentObject.cloneNode(true);
-  rentObjectElement.style = 'left: 130; right: 160;';
+
+  rentObjectElement.querySelector('.map__pin').style = 'left: ' + rentObject.location.x + 'px; top:' + rentObject.location.y + 'px';
+  rentObjectElement.src = rentObject.author.avatar;
   return rentObjectElement;
 
 };
