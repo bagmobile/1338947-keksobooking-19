@@ -89,7 +89,9 @@ var renderRentObjects = function (rentObjects) {
   document.querySelector('.map__pins').appendChild(fragment);
 };
 
+var rentObjects = generateRentObjects();
+
 document.querySelector('.map').classList.remove('map--faded');
-renderRentObjects(generateRentObjects());
+renderRentObjects(rentObjects);
 
 
