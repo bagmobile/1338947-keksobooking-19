@@ -1,6 +1,7 @@
 'use strict';
 
 var MAX_RENT_OBJECT = 8;
+var LEFT_OFFSET = 25;
 
 var generateAvatarName = function (i) {
   var TEMPLATE_REPLACEMENT = '{{xx}}';
@@ -15,13 +16,13 @@ var generateRangeRandomValue = function (min, max) {
 var generateRentObjects = function () {
   var result = [];
   for (var i = 0; i < MAX_RENT_OBJECT; i++) {
-
+    var mapElement = document.querySelector('.map__pins');
     result.push({
       'author': {
         'avatar': generateAvatarName(i + 1),
       },
       'offer': {
-        'title': 'Offer',
+        'title': 'Offer' + (i + 1),
         'address': '',
         'price': '',
         'type': '',
@@ -34,7 +35,7 @@ var generateRentObjects = function () {
         'photos': '',
       },
       'location': {
-        'x': generateRangeRandomValue(100, 700),
+        'x': generateRangeRandomValue(mapElement.clientLeft + LEFT_OFFSET, mapElement.clientLeft + mapElement.clientWidth - LEFT_OFFSET),
         'y': generateRangeRandomValue(130, 630),
       },
     });
@@ -46,10 +47,11 @@ var createRentObjectElement = function (rentObject) {
   var templateRentObject = document.querySelector('#pin').content;
   var rentObjectElement = templateRentObject.cloneNode(true);
 
-  rentObjectElement.querySelector('.map__pin').style = 'left: ' + rentObject.location.x + 'px; top:' + rentObject.location.y + 'px';
-  rentObjectElement.src = rentObject.author.avatar;
-  return rentObjectElement;
+  rentObjectElement.querySelector('.map__pin').style = 'left: ' + (rentObject.location.x - 25) + 'px; top:' + (rentObject.location.y - 70) + 'px';
+  rentObjectElement.querySelector('img').src = rentObject.author.avatar;
+  rentObjectElement.querySelector('img').alt = rentObject.offer.title;
 
+  return rentObjectElement;
 };
 
 var renderRentObjects = function (rentObjects) {
@@ -61,8 +63,8 @@ var renderRentObjects = function (rentObjects) {
   document.querySelector('.map__pins').appendChild(fragment);
 };
 
+document.querySelector('.map').classList.remove('map--faded');
 var rentObjects = generateRentObjects();
 renderRentObjects(rentObjects);
-document.querySelector('.map').classList.remove('map--faded');
 
-//console.log(generateRentObjects());
+
