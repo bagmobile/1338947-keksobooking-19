@@ -95,8 +95,19 @@ var renderRentObjects = function (rentObjects) {
   document.querySelector('.map__pins').appendChild(fragment);
 };
 
+document.querySelector('.map').classList.remove('map--faded');
+
+// Генерим данные для объектов недвидимости/
 var rentObjects = generateRentObjects();
 
+// Рендерим поинты объектов недвижимости 8 штук - задание Личный проект: больше деталей (часть 1)/
+renderRentObjects(rentObjects);
+
+/*
+* задание Личный проект: больше деталей (часть 2)
+* */
+
+// Рендерим фичи объекта недвижимости в карточку/
 var renderFeatures = function (element, features) {
   var listElement = element.querySelectorAll('.popup__feature');
   for (var i = 0; i < listElement.length; i++) {
@@ -106,7 +117,23 @@ var renderFeatures = function (element, features) {
   }
 };
 
-var rentCard = function (rentObject) {
+// Рендерим фотки объекта недвижимости в карточку/
+var renderPhotos = function (element, photos) {
+  var fragment = document.createDocumentFragment();
+  var photosElement = element.querySelector('.popup__photos');
+  var photoElement = photosElement.querySelector('.popup__photo');
+  var photo = photosElement.removeChild(photoElement);
+  for (var i = 0; i < photos.length; i++) {
+    var newPhotoElement = photo.cloneNode(true);
+    newPhotoElement.src = photos[i];
+    fragment.appendChild(newPhotoElement);
+  }
+  photosElement.appendChild(fragment);
+  photo = null;
+};
+
+// Рендерим карточку объекта недвижимости /
+var renderRentCard = function (rentObject) {
   var templateRentCard = document.querySelector('#card').content.querySelector('.map__card');
   var rentCardElement = templateRentCard.cloneNode(true);
   rentCardElement.querySelector('.popup__title').textContent = rentObject.offer.title;
@@ -115,14 +142,14 @@ var rentCard = function (rentObject) {
   rentCardElement.querySelector('.popup__type').textContent = RentTypes[rentObject.offer.type];
   rentCardElement.querySelector('.popup__text--capacity').textContent = rentObject.offer.rooms + ' комнат(ы) для ' + rentObject.offer.guests + ' гостей';
   rentCardElement.querySelector('.popup__text--time').textContent = 'Заезд после ' + rentObject.offer.checkin + ', выезд до ' + rentObject.offer.checkout;
-  renderFeatures(rentCardElement, rentObject.offer.features);
   rentCardElement.querySelector('.popup__description').textContent = rentObject.offer.description;
   rentCardElement.querySelector('.popup__avatar').src = rentObject.author.avatar;
+  renderFeatures(rentCardElement, rentObject.offer.features);
+  renderPhotos(rentCardElement, rentObject.offer.photos);
   document.querySelector('.map__filters-container').insertAdjacentElement('beforebegin', rentCardElement);
 };
 
-document.querySelector('.map').classList.remove('map--faded');
-renderRentObjects(rentObjects);
-rentCard(rentObjects[0]);
+// Рендерим карточку первого объекта недвижимости -  задание Личный проект: больше деталей (часть 2)/
+renderRentCard(rentObjects[0]);
 
 
