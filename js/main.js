@@ -95,20 +95,38 @@ var renderRentObjects = function (rentObjects) {
   document.querySelector('.map__pins').appendChild(fragment);
 };
 
-document.querySelector('.map').classList.remove('map--faded');
+//document.querySelector('.map').classList.remove('map--faded');
 
 // Генерим данные для объектов недвидимости/
 var rentObjects = generateRentObjects();
+var formFieldSets = document.querySelector('form.ad-form').querySelectorAll('fieldset');
+var triggerActiveElement = function(elements){
+  for (var i = 0; i < elements.length; i++) {
+    if (elements[i].getAttribute('disabled')){
+      elements[i].removeAttribute('disabled');
+    } else {
+      elements[i].setAttribute('disabled', '');
+    }
+  }
+};
 
+
+document.querySelector('.map__pin-main').addEventListener('mouseDown', function(evt){
+  if (evt.button === 0) {
+
+  }
+});
+
+disableFormField();
 // Рендерим поинты объектов недвижимости 8 штук - задание Личный проект: больше деталей (часть 1)/
-renderRentObjects(rentObjects);
+//renderRentObjects(rentObjects);
 
 /*
 * задание Личный проект: больше деталей (часть 2)
 * */
-
-// Рендерим фичи объекта недвижимости в карточку/
-var renderFeatures = function (element, features) {
+/**
+ // Рендерим фичи объекта недвижимости в карточку/
+ var renderFeatures = function (element, features) {
   var listElement = element.querySelectorAll('.popup__feature');
   for (var i = 0; i < listElement.length; i++) {
     if (features.indexOf(listElement[i].className.replace('popup__feature popup__feature--', '')) === -1) {
@@ -117,8 +135,8 @@ var renderFeatures = function (element, features) {
   }
 };
 
-// Рендерим фотки объекта недвижимости в карточку/
-var renderPhotos = function (element, photos) {
+ // Рендерим фотки объекта недвижимости в карточку/
+ var renderPhotos = function (element, photos) {
   var fragment = document.createDocumentFragment();
   var photosElement = element.querySelector('.popup__photos');
   var photoElement = photosElement.querySelector('.popup__photo');
@@ -132,8 +150,10 @@ var renderPhotos = function (element, photos) {
   photo = null;
 };
 
-// Рендерим карточку объекта недвижимости /
-var renderRentCard = function (rentObject) {
+
+
+ // Рендерим карточку объекта недвижимости /
+ var renderRentCard = function (rentObject) {
   var templateRentCard = document.querySelector('#card').content.querySelector('.map__card');
   var rentCardElement = templateRentCard.cloneNode(true);
   rentCardElement.querySelector('.popup__title').textContent = rentObject.offer.title;
@@ -149,7 +169,7 @@ var renderRentCard = function (rentObject) {
   document.querySelector('.map__filters-container').insertAdjacentElement('beforebegin', rentCardElement);
 };
 
-// Рендерим карточку первого объекта недвижимости -  задание Личный проект: больше деталей (часть 2)/
-renderRentCard(rentObjects[0]);
-
+ // Рендерим карточку первого объекта недвижимости -  задание Личный проект: больше деталей (часть 2)/
+ renderRentCard(rentObjects[0]);
+ */
 
