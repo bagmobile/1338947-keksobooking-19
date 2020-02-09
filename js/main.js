@@ -20,13 +20,6 @@ var rentCheckTimes = ['12:00', '13:00', '14:00'];
 var rentFeatures = ['wifi', 'dishwasher', 'parking', 'washer', 'elevator', 'conditioner'];
 var rentPhotos = ['http://o0.github.io/assets/images/tokyo/hotel1.jpg', 'http://o0.github.io/assets/images/tokyo/hotel2.jpg', 'http://o0.github.io/assets/images/tokyo/hotel3.jpg'];
 
-var RentTypes = {
-  'palace': 'Дворец',
-  'flat': 'Квартира',
-  'house': 'Дом',
-  'bungalo': 'Бунгало',
-};
-
 var generateRandomValue = function (max) {
   return Math.floor(Math.random() * max);
 };
@@ -95,36 +88,137 @@ var renderRentObjects = function (rentObjects) {
   document.querySelector('.map__pins').appendChild(fragment);
 };
 
-//document.querySelector('.map').classList.remove('map--faded');
-
 // Генерим данные для объектов недвидимости/
 var rentObjects = generateRentObjects();
-var formFieldSets = document.querySelector('form.ad-form').querySelectorAll('fieldset');
-var triggerActiveElement = function(elements){
-  for (var i = 0; i < elements.length; i++) {
-    if (elements[i].getAttribute('disabled')){
-      elements[i].removeAttribute('disabled');
-    } else {
-      elements[i].setAttribute('disabled', '');
-    }
+
+/*
+9. Личный проект: доверяй, но проверяй (часть 1)
+*/
+
+var adFormElements = document.querySelector('form.ad-form').querySelectorAll('fieldset');
+var filterFormElements = document.querySelector('form.map__filters').querySelectorAll('select, fieldset');
+var mapPinMain = document.querySelector('.map__pin--main');
+var addressElementForm = document.querySelector('form.ad-form').querySelector('#address');
+var priceElementForm = document.querySelector('form.ad-form').querySelector('#price');
+var typeElementForm = document.querySelector('form.ad-form').querySelector('#type');
+var capacityElementForm = document.querySelector('form.ad-form').querySelector('#capacity');
+var roomNumberElementForm = document.querySelector('form.ad-form').querySelector('#room_number');
+var timeInElementForm = document.querySelector('form.ad-form #timein');
+var timeOutElementForm = document.querySelector('form.ad-form #timeout');
+
+var initBooking = function () {
+  deactivateBooking();
+  addressElementForm.setAttribute('value', getAddressFromChords());
+};
+
+var activateBooking = function () {
+  if (document.querySelector('.map.map--faded') !== null) {
+    document.querySelector('.map').classList.remove('map--faded');
+    document.querySelector('form.ad-form').classList.remove('ad-form--disabled');
+    addressElementForm.setAttribute('value', getAddressFromChords());
+    renderRentObjects(rentObjects);
+    activateFormElements(adFormElements);
+    activateFormElements(filterFormElements);
+    validateCountGuest();
   }
 };
 
+var deactivateBooking = function () {
+  disableFormElements(adFormElements);
+  disableFormElements(filterFormElements);
+  document.querySelector('.map').classList.add('map--faded');
+  document.querySelector('form.ad-form').classList.add('ad-form--disabled');
+};
 
-document.querySelector('.map__pin-main').addEventListener('mouseDown', function(evt){
+var activateFormElements = function (elements) {
+  for (var i = 0; i < elements.length; i++) {
+    elements[i].removeAttribute('disabled');
+  }
+};
+
+var disableFormElements = function (elements) {
+  for (var i = 0; i < elements.length; i++) {
+    elements[i].setAttribute('disabled', '');
+  }
+};
+
+var getAddressFromChords = function () {
+  return Math.round(Number(mapPinMain.style.left.replace('px', '')) + LEFT_OFFSET)
+    + ', ' + Math.round(Number(mapPinMain.style.top.replace('px', '')) + TOP_OFFSET);
+};
+
+var validateCountGuest = function () {
+  var rulesMapping = {
+    100: [0],
+    1: [1],
+    2: [1, 2],
+    3: [1, 2, 3],
+  };
+  var roomNumberSelectedValue = roomNumberElementForm.options[roomNumberElementForm.selectedIndex].value;
+  var capacitySelectedValue = capacityElementForm.options[capacityElementForm.selectedIndex].value;
+  [roomNumberElementForm, capacityElementForm].forEach(function (element) {
+    element.setCustomValidity('');
+  });
+  for (var i = 0; i < rulesMapping[roomNumberSelectedValue].length; i++) {
+    if (rulesMapping[roomNumberSelectedValue][i] === Number(capacitySelectedValue)) {
+      return;
+    }
+  }
+  capacityElementForm.setCustomValidity('Количесво гостей не соответствует количеству комнат');
+};
+
+mapPinMain.addEventListener('mousedown', function (evt) {
   if (evt.button === 0) {
-
+    activateBooking();
   }
 });
 
-disableFormField();
-// Рендерим поинты объектов недвижимости 8 штук - задание Личный проект: больше деталей (часть 1)/
-//renderRentObjects(rentObjects);
+mapPinMain.addEventListener('keydown', function (evt) {
+  if (evt.key === 'Enter') {
+    activateBooking();
+  }
+});
+
+timeInElementForm.addEventListener('change', function () {
+  timeOutElementForm.options.selectedIndex = timeInElementForm.options.selectedIndex;
+});
+
+timeOutElementForm.addEventListener('change', function () {
+  timeInElementForm.options.selectedIndex = timeOutElementForm.options.selectedIndex;
+});
+
+typeElementForm.addEventListener('change', function () {
+  var typeRentMinPrice = {
+    'bungalo': 0,
+    'flat': 1000,
+    'house': 5000,
+    'palace': 10000,
+  };
+  var newValue = typeElementForm.options[typeElementForm.selectedIndex].value;
+  priceElementForm.setAttribute('min', typeRentMinPrice[newValue]);
+  priceElementForm.setAttribute('placeholder', typeRentMinPrice[newValue]);
+});
+
+[roomNumberElementForm, capacityElementForm].forEach(function (element) {
+  element.addEventListener('change', function (evt) {
+    validateCountGuest(evt);
+  });
+});
+
+
+initBooking();
 
 /*
 * задание Личный проект: больше деталей (часть 2)
 * */
 /**
+ var RentTypes = {
+  'palace': 'Дворец',
+  'flat': 'Квартира',
+  'house': 'Дом',
+  'bungalo': 'Бунгало',
+};
+
  // Рендерим фичи объекта недвижимости в карточку/
  var renderFeatures = function (element, features) {
   var listElement = element.querySelectorAll('.popup__feature');
@@ -149,7 +243,6 @@ disableFormField();
   photosElement.appendChild(fragment);
   photo = null;
 };
-
 
 
  // Рендерим карточку объекта недвижимости /
