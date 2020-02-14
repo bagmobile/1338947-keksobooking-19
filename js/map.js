@@ -2,14 +2,31 @@
 
 (function () {
 
-  var ESC_KEY = 'Escape';
-  var ENTER_KEY = 'Enter';
-
+  var rentObjects;
   var map = document.querySelector('.map');
-  var rentObjects = window.data.generateRentObjects();
 
   var initBooking = function () {
+    var successHandler = function (data) {
+      rentObjects = data;
+      window.pin.mapPinMain.addEventListener('mousedown', activateBookingHandler);
+      window.pin.mapPinMain.addEventListener('keydown', activateBookingHandler);
+    };
+    var errorHandler = function (error) {
+      addErrorMessageElement(error);
+    };
+    window.load.loadData(successHandler, errorHandler);
     deactivateBooking();
+  };
+
+  var addErrorMessageElement = function (error) {
+    var node = document.createElement('div');
+    node.style = 'z-index: 100; margin: 100px auto; text-align: center; color: red;';
+    node.style.position = 'absolute';
+    node.style.left = 0;
+    node.style.right = 0;
+    node.style.fontSize = '30px';
+    node.textContent = error;
+    map.append(node);
   };
 
   var activateBooking = function () {
@@ -30,32 +47,29 @@
     window.domUtil.isLeftButtonMouseEvent(evt, activateBooking);
   };
 
-  window.pin.mapPinMain.addEventListener('mousedown', activateBookingHandler);
-
-  window.pin.mapPinMain.addEventListener('keydown', activateBookingHandler);
-
   map.addEventListener('click', function (evt) {
 
-    if ((evt.button === 0)) {
+    window.domUtil.isLeftButtonMouseEvent(evt, function () {
       if (evt.target.matches('article.map__card button.popup__close')) {
         window.card.closeRentCardElement(evt.target.parentElement);
       }
-      if (evt.target.matches('.map__pin:not(.map__pin--main) > img')) {
-        window.card.showRentCardElement(rentObjects, evt.target.parentElement);
-      }
-      if (evt.target.matches('.map__pin:not(.map__pin--main)')) {
-        window.card.showRentCardElement(rentObjects, evt.target);
-      }
-    }
+    });
+
+    window.domUtil.isLeftButtonMouseEvent(evt, function () {
+      window.card.showRentCardElement(rentObjects, evt.target);
+    });
+
   });
 
   map.addEventListener('keydown', function (evt) {
-    if (evt.key === ESC_KEY) {
+
+    window.domUtil.isEscEvent(evt, function () {
       window.card.closeRentCardElement(map.querySelector('article.map__card:not(.hidden)'));
-    }
-    if ((evt.key === ENTER_KEY) && evt.target.matches('.map__pin:not(.map__pin--main)')) {
+    });
+
+    window.domUtil.isEnterEvent(evt, function () {
       window.card.showRentCardElement(rentObjects, evt.target);
-    }
+    });
   });
 
   initBooking();
