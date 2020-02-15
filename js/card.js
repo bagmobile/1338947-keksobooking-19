@@ -52,8 +52,8 @@
   };
 
   var showRentCardElement = function (rentObjects, element) {
-    if (element !== null) {
-      var rentOrderElement = element.dataset.rentOrderElement;
+    if ((element !== null) && (element.matches('.map__pin:not(.map__pin--main), .map__pin:not(.map__pin--main) > img'))) {
+      var rentOrderElement = element.dataset.rentOrderElement ? element.dataset.rentOrderElement : element.parentElement.dataset.rentOrderElement;
       closeRentCardElement(document.querySelector('.map article.map__card:not(.hidden)'));
       getRentCardElement(rentObjects[rentOrderElement], rentOrderElement).classList.remove('hidden');
     }
