@@ -2,62 +2,63 @@
 
 (function () {
 
-  var ESC_KEY = 'Escape';
-  var ENTER_KEY = 'Enter';
-
+  var rentObjects;
   var map = document.querySelector('.map');
-  var rentObjects = window.data.generateRentObjects();
 
-  var initBooking = function () {
-    deactivateBooking();
+  var initMap = function () {
+    var onSuccess = function (data) {
+      rentObjects = data;
+      window.pin.mapPinMain.addEventListener('mousedown', onActivateMap);
+      window.pin.mapPinMain.addEventListener('keydown', onActivateMap);
+    };
+    var onError = function (error) {
+      window.message.showErrorMessage('Обновите страницу. ' + error);
+    };
+    deactivateMap();
+    window.load.loadData(onSuccess, onError);
   };
 
-  var activateBooking = function () {
-    if (document.querySelector('.map.map--faded') !== null) {
+  var activateMap = function () {
+    if (map.classList.contains('map--faded')) {
       map.classList.remove('map--faded');
       window.pin.renderRentPinElements(rentObjects);
       window.form.activate();
     }
   };
 
-  var deactivateBooking = function () {
+  var deactivateMap = function () {
     window.form.deactivate();
     map.classList.add('map--faded');
   };
 
-  var activateBookingHandler = function (evt) {
-    window.domUtil.isEnterEvent(evt, activateBooking);
-    window.domUtil.isLeftButtonMouseEvent(evt, activateBooking);
+  var onActivateMap = function (evt) {
+    window.domUtil.isEnterEvent(evt, activateMap);
+    window.domUtil.isLeftButtonMouseEvent(evt, activateMap);
   };
 
-  window.pin.mapPinMain.addEventListener('mousedown', activateBookingHandler);
-
-  window.pin.mapPinMain.addEventListener('keydown', activateBookingHandler);
-
   map.addEventListener('click', function (evt) {
-
-    if ((evt.button === 0)) {
+    window.domUtil.isLeftButtonMouseEvent(evt, function () {
       if (evt.target.matches('article.map__card button.popup__close')) {
         window.card.closeRentCardElement(evt.target.parentElement);
       }
-      if (evt.target.matches('.map__pin:not(.map__pin--main) > img')) {
-        window.card.showRentCardElement(rentObjects, evt.target.parentElement);
-      }
-      if (evt.target.matches('.map__pin:not(.map__pin--main)')) {
-        window.card.showRentCardElement(rentObjects, evt.target);
-      }
-    }
+    });
+
+    window.domUtil.isLeftButtonMouseEvent(evt, function () {
+      window.card.showRentCardElement(rentObjects, evt.target);
+    });
+
   });
 
   map.addEventListener('keydown', function (evt) {
-    if (evt.key === ESC_KEY) {
+    window.domUtil.isEscEvent(evt, function () {
       window.card.closeRentCardElement(map.querySelector('article.map__card:not(.hidden)'));
-    }
-    if ((evt.key === ENTER_KEY) && evt.target.matches('.map__pin:not(.map__pin--main)')) {
+    });
+
+    window.domUtil.isEnterEvent(evt, function () {
       window.card.showRentCardElement(rentObjects, evt.target);
-    }
+    });
   });
 
-  initBooking();
+  initMap();
 
 })();

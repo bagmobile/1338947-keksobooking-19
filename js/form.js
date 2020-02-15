@@ -1,16 +1,17 @@
 'use strict';
 
 (function (w) {
-  var adFormElements = document.querySelector('form.ad-form').querySelectorAll('fieldset');
-  var filterFormElements = document.querySelector('form.map__filters').querySelectorAll('select, fieldset');
-  var addressElementForm = document.querySelector('form.ad-form #address');
-  var priceElementForm = document.querySelector('form.ad-form #price');
-  var typeElementForm = document.querySelector('form.ad-form #type');
-  var capacityElementForm = document.querySelector('form.ad-form #capacity');
-  var roomNumberElementForm = document.querySelector('form.ad-form #room_number');
-  var timeInElementForm = document.querySelector('form.ad-form #timein');
-  var timeOutElementForm = document.querySelector('form.ad-form #timeout');
-
+  var noticeForm = document.querySelector('form.ad-form');
+  var filterForm = document.querySelector('.map__filters');
+  var adFormElements = noticeForm.querySelectorAll('fieldset');
+  var filterFormElements = filterForm.querySelectorAll('select, fieldset');
+  var addressElementForm = noticeForm.querySelector('.ad-form #address');
+  var priceElementForm = noticeForm.querySelector('.ad-form #price');
+  var typeElementForm = noticeForm.querySelector('.ad-form #type');
+  var capacityElementForm = noticeForm.querySelector('.ad-form #capacity');
+  var roomNumberElementForm = noticeForm.querySelector('.ad-form #room_number');
+  var timeInElementForm = noticeForm.querySelector('.ad-form #timein');
+  var timeOutElementForm = noticeForm.querySelector('.ad-form #timeout');
 
   var activate = function () {
     activateFormElements(adFormElements);
@@ -18,13 +19,13 @@
     setAddress();
     setType();
     validateCountGuest();
-    document.querySelector('form.ad-form').classList.remove('ad-form--disabled');
+    noticeForm.classList.remove('ad-form--disabled');
   };
 
   var deactivate = function () {
     disableFormElements(adFormElements);
     disableFormElements(filterFormElements);
-    document.querySelector('form.ad-form').classList.add('ad-form--disabled');
+    noticeForm.classList.add('ad-form--disabled');
   };
 
   var setAddress = function () {
@@ -63,6 +64,22 @@
     element.addEventListener('change', function (evt) {
       validateCountGuest(evt);
     });
+  });
+
+  noticeForm.addEventListener('submit', function (evt) {
+    var onSuccess = function () {
+      noticeForm.reset();
+      window.message.showSuccessMessage();
+    };
+    var onError = function () {
+      window.message.showErrorMessage();
+    };
+    evt.preventDefault();
+    window.upload.uploadData(new FormData(noticeForm), noticeForm.getAttribute('action'), onSuccess, onError);
+  });
+
+  noticeForm.addEventListener('reset', function (_evt) {
+
   });
 
   var getAddressFromChords = function (element) {
