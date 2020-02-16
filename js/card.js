@@ -1,6 +1,7 @@
 'use strict';
 
 (function (w) {
+  var mapFiltersContanier = document.querySelector('.map__filters-container');
   var setRentCardFeatures = function (element, features) {
     var listElement = element.querySelectorAll('.popup__feature');
     for (var i = 0; i < listElement.length; i++) {
@@ -40,7 +41,7 @@
       rentCardElement.querySelector('.popup__avatar').src = rentObject.author.avatar;
       setRentCardFeatures(rentCardElement, rentObject.offer.features);
       setRentCardPhotos(rentCardElement, rentObject.offer.photos);
-      document.querySelector('.map__filters-container').insertAdjacentElement('beforebegin', rentCardElement);
+      mapFiltersContanier.insertAdjacentElement('beforebegin', rentCardElement);
     }
     return rentCardElement;
   };

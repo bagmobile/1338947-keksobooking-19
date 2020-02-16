@@ -8,8 +8,12 @@
   var initMap = function () {
     var onSuccess = function (data) {
       rentObjects = data;
-      window.pin.mapPinMain.addEventListener('mousedown', onActivateMap);
-      window.pin.mapPinMain.addEventListener('keydown', onActivateMap);
+      window.pin.mainPin.addEventListener('mousedown', function (evt) {
+        window.domUtil.isLeftButtonMouseEvent(evt, onActivateMap);
+      });
+      window.pin.mainPin.addEventListener('keydown', function (evt) {
+        window.domUtil.isEnterEvent(evt, onActivateMap);
+      });
     };
     var onError = function (error) {
       window.message.showErrorMessage('Обновите страницу. ' + error);
@@ -18,7 +22,7 @@
     window.load.loadData(onSuccess, onError);
   };
 
-  var activateMap = function () {
+  var onActivateMap = function () {
     if (map.classList.contains('map--faded')) {
       map.classList.remove('map--faded');
       window.pin.renderRentPinElements(rentObjects);
@@ -29,11 +33,6 @@
   var deactivateMap = function () {
     window.form.deactivate();
     map.classList.add('map--faded');
-  };
-
-  var onActivateMap = function (evt) {
-    window.domUtil.isEnterEvent(evt, activateMap);
-    window.domUtil.isLeftButtonMouseEvent(evt, activateMap);
   };
 
   map.addEventListener('click', function (evt) {
