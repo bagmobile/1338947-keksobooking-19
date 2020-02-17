@@ -20,9 +20,9 @@
     'house': 'Дом',
     'bungalo': 'Бунгало',
   };
-  var MapLeft = {
-    x: 130,
-    y: 630,
+  var MapRangeY = {
+    BEGIN: 130,
+    END: 630,
   };
   var RentTypeMinPrice = {
     'palace': 10000,
@@ -38,7 +38,7 @@
 
     for (var i = 0; i < MAX_RENT_OBJECT; i++) {
       var x = window.mathUtil.generateRangeRandomValue(mapElement.clientLeft, mapElement.clientLeft + mapElement.clientWidth);
-      var y = window.mathUtil.generateRangeRandomValue(MapLeft.x, MapLeft.y);
+      var y = window.mathUtil.generateRangeRandomValue(MapRangeY.BEGIN, MapRangeY.END);
       var roomCount = window.mathUtil.generateRandomValue(MAX_ROOM_COUNT);
 
       result.push({

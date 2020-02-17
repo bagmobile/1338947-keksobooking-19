@@ -13,10 +13,14 @@
   var timeInElementForm = noticeForm.querySelector('.ad-form #timein');
   var timeOutElementForm = noticeForm.querySelector('.ad-form #timeout');
 
+  var init = function () {
+    setAddress(window.pin.getCoordinatePinCenter(window.pin.mainPin));
+  };
+
   var activate = function () {
     activateFormElements(adFormElements);
     activateFormElements(filterFormElements);
-    setAddress();
+    setAddress(window.pin.getCoordinatePointMainPin());
     setType();
     validateCountGuest();
     noticeForm.classList.remove('ad-form--disabled');
@@ -28,8 +32,8 @@
     noticeForm.classList.add('ad-form--disabled');
   };
 
-  var setAddress = function () {
-    addressElementForm.setAttribute('value', getAddressFromChords(window.pin.mapPinMain));
+  var setAddress = function (coordinate) {
+    addressElementForm.setAttribute('value', coordinate.x + ', ' + coordinate.y);
   };
 
   var setType = function () {
@@ -82,10 +86,6 @@
 
   });
 
-  var getAddressFromChords = function (element) {
-    return Math.round(Number(element.style.left.replace('px', '')) + window.pin.LEFT_OFFSET)
-      + ', ' + Math.round(Number(element.style.top.replace('px', '')) + window.pin.TOP_OFFSET);
-  };
 
   var validateCountGuest = function () {
     var rulesMapping = {
@@ -107,8 +107,11 @@
     capacityElementForm.setCustomValidity('Количесво гостей не соответствует количеству комнат');
   };
 
+  init();
+
   w.form = {
     activate: activate,
-    deactivate: deactivate
+    deactivate: deactivate,
+    setAddress: setAddress,
   };
 })(window);

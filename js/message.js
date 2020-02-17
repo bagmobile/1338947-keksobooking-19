@@ -14,7 +14,9 @@
     });
     templatePlace.addEventListener('keydown', function (evt) {
       window.domUtil.isEscEvent(evt, function () {
-        hideElement(evt.target);
+        if (evt.target.matches('.success, .error')) {
+          hideElement(evt.target);
+        }
       });
     });
     templatePlace.addEventListener('click', function (evt) {
