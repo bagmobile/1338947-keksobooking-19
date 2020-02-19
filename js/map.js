@@ -1,38 +1,21 @@
 'use strict';
 
-(function () {
+(function (w) {
 
-  var rentObjects;
   var map = document.querySelector('.map');
 
-  var initMap = function () {
-    var onSuccess = function (data) {
-      rentObjects = data;
-      window.pin.mainPin.addEventListener('mousedown', function (evt) {
-        window.domUtil.isLeftButtonMouseEvent(evt, onActivateMap);
-      });
-      window.pin.mainPin.addEventListener('keydown', function (evt) {
-        window.domUtil.isEnterEvent(evt, onActivateMap);
-      });
-    };
-    var onError = function (error) {
-      window.message.showErrorMessage('Обновите страницу. ' + error);
-    };
-    deactivateMap();
-    window.load.loadData(onSuccess, onError);
-  };
-
-  var onActivateMap = function () {
-    if (map.classList.contains('map--faded')) {
+  var activate = function () {
+    if (!isActiveMap()) {
       map.classList.remove('map--faded');
-      window.pin.renderRentPinElements(rentObjects);
-      window.form.activate();
     }
   };
 
-  var deactivateMap = function () {
-    window.form.deactivate();
+  var deactivate = function () {
     map.classList.add('map--faded');
+  };
+
+  var isActiveMap = function () {
+    return !map.classList.contains('map--faded');
   };
 
   map.addEventListener('click', function (evt) {
@@ -43,7 +26,7 @@
     });
 
     window.domUtil.isLeftButtonMouseEvent(evt, function () {
-      window.card.showRentCardElement(rentObjects, evt.target);
+      window.card.showRentCardElement(evt.target);
     });
 
   });
@@ -54,10 +37,15 @@
     });
 
     window.domUtil.isEnterEvent(evt, function () {
-      window.card.showRentCardElement(rentObjects, evt.target);
+      window.card.showRentCardElement(evt.target);
     });
   });
 
-  initMap();
+  w.map = {
+    map: map,
+    isActiveMap: isActiveMap,
+    activate: activate,
+    deactivate: deactivate
+  };
 
-})();
+})(window);

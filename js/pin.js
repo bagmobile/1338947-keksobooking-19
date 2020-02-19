@@ -9,52 +9,60 @@
     LEFT_OFFSET: 32.5,
     TOP_OFFSET: 84,
   };
+
+
   var map = document.querySelector('.map');
+
   var mapAreaRange = {
     y: {begin: 130, end: 630},
     x: {begin: 0, end: map.clientWidth - MainPinOffset.LEFT_OFFSET * 2},
   };
   var mainPin = document.querySelector('.map__pin--main');
-  var inserArea = document.querySelector('.map__pins');
+  var pinBlock = document.querySelector('.map__pins');
   var templateRentObject = document.querySelector('#pin').content;
 
-  var createRentPinElement = function (rentObject, order) {
-    var rentObjectElement = templateRentObject.cloneNode(true);
-    setCoordinateForStyleElement(rentObjectElement.querySelector('.map__pin'), rentObject.location.x - PinOffset.LEFT_OFFSET, rentObject.location.y - PinOffset.TOP_OFFSET);
-    rentObjectElement.querySelector('img').src = rentObject.author.avatar;
-    rentObjectElement.querySelector('img').alt = rentObject.offer.title;
-    rentObjectElement.querySelector('.map__pin').dataset.rentOrderElement = order;
-    return rentObjectElement;
+  var initMainPinCoordinate = {
+    x: window.domUtil.getNumberCoordinateFromStyleElement(mainPin.style.left),
+    y: window.domUtil.getNumberCoordinateFromStyleElement(mainPin.style.top)
   };
 
-  var renderRentPinElements = function (rentObjects) {
+  var resetActivePin = function (element) {
+    var activePin = map.querySelector('.map__pin--active');
+    if (activePin) {
+      activePin.classList.remove('map__pin--active');
+    }
+    if (element) {
+      element.classList.add('map__pin--active');
+    }
+  };
+
+  var createPinElement = function (rentObject) {
+    var pinElement = templateRentObject.cloneNode(true).querySelector('.map__pin');
+    window.domUtil.setCoordinateForStyleElement(pinElement, rentObject.location.x - PinOffset.LEFT_OFFSET, rentObject.location.y - PinOffset.TOP_OFFSET);
+    pinElement.querySelector('img').src = rentObject.author.avatar;
+    pinElement.querySelector('img').alt = rentObject.offer.title;
+    pinElement.dataset.rentOrderElement = rentObject.id;
+    return pinElement;
+  };
+
+  var renderPinElements = function (rentObjects) {
     var fragment = document.createDocumentFragment();
-    rentObjects.forEach(function (value, index) {
-      fragment.appendChild(createRentPinElement(value, index));
+    rentObjects.forEach(function (value) {
+      fragment.appendChild(createPinElement(value));
     });
-    inserArea.appendChild(fragment);
+    pinBlock.appendChild(fragment);
   };
 
-  var getNumberCoordinateFromStyleElement = function (coordinate, offset) {
-    return Math.round(Number(coordinate.replace('px', '')) + offset);
-  };
-
-  var setCoordinateForStyleElement = function (element, x, y) {
-    element.style.left = x + 'px';
-    element.style.top = y + 'px';
-  };
-
-  var getCoordinatePinCenter = function (element) {
-    return {
-      x: getNumberCoordinateFromStyleElement(element.style.left, element.offsetWidth / 2),
-      y: getNumberCoordinateFromStyleElement(element.style.top, element.offsetHeight / 2),
-    };
+  var removePinElements = function () {
+    window.map.map.querySelectorAll('.map__pin:not(.map__pin--main)').forEach(function (element) {
+      element.remove();
+    });
   };
 
   var getCoordinatePointMainPin = function () {
     return {
-      x: getNumberCoordinateFromStyleElement(mainPin.style.left, MainPinOffset.LEFT_OFFSET),
-      y: getNumberCoordinateFromStyleElement(mainPin.style.top, MainPinOffset.TOP_OFFSET),
+      x: window.domUtil.getNumberCoordinateFromStyleElement(mainPin.style.left, MainPinOffset.LEFT_OFFSET),
+      y: window.domUtil.getNumberCoordinateFromStyleElement(mainPin.style.top, MainPinOffset.TOP_OFFSET),
     };
   };
 
@@ -88,7 +96,7 @@
         x: mouseMoveEvent.clientX,
         y: mouseMoveEvent.clientY,
       };
-      setCoordinateForStyleElement(mainPin, mainPin.offsetLeft - shift.x, mainPin.offsetTop - shift.y);
+      window.domUtil.setCoordinateForStyleElement(mainPin, mainPin.offsetLeft - shift.x, mainPin.offsetTop - shift.y);
       window.form.setAddress(getCoordinatePointMainPin());
     };
 
@@ -101,10 +109,44 @@
     document.addEventListener('mouseup', onMouseUp);
   });
 
+  var onActivateMap = function () {
+    var onSuccess = function (data) {
+      window.map.activate();
+      window.form.activateNoticeForm();
+      if (data.length !== 0) {
+        window.data.setDataRentObjects(data);
+        renderPinElements(window.data.getFilteredRentObjects());
+        window.form.activateFilterForm();
+      }
+    };
+    var onError = function (error) {
+      window.map.deactivate();
+      window.message.showErrorMessage(error);
+    };
+    if (!window.map.isActiveMap()) {
+      window.load.loadData(onSuccess, onError);
+    }
+  };
+
+
+  var onMouseDownMainPin = function (evt) {
+    window.domUtil.isLeftButtonMouseEvent(evt, onActivateMap);
+  };
+
+  var onKeyDownMainPin = function (evt) {
+    window.domUtil.isEnterEvent(evt, onActivateMap);
+  };
+
+  mainPin.addEventListener('mousedown', onMouseDownMainPin);
+
+  mainPin.addEventListener('keydown', onKeyDownMainPin);
+
   w.pin = {
     mainPin: mainPin,
-    getCoordinatePinCenter: getCoordinatePinCenter,
+    initMainPinCoordinate: initMainPinCoordinate,
     getCoordinatePointMainPin: getCoordinatePointMainPin,
-    renderRentPinElements: renderRentPinElements,
+    renderPinElements: renderPinElements,
+    removePinElements: removePinElements,
+    resetActivePin: resetActivePin
   };
 })(window);

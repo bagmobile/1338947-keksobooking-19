@@ -3,7 +3,7 @@
 (function (w) {
   var noticeForm = document.querySelector('form.ad-form');
   var filterForm = document.querySelector('.map__filters');
-  var adFormElements = noticeForm.querySelectorAll('fieldset');
+  var noticeFormElements = noticeForm.querySelectorAll('fieldset');
   var filterFormElements = filterForm.querySelectorAll('select, fieldset');
   var addressElementForm = noticeForm.querySelector('.ad-form #address');
   var priceElementForm = noticeForm.querySelector('.ad-form #price');
@@ -14,22 +14,40 @@
   var timeOutElementForm = noticeForm.querySelector('.ad-form #timeout');
 
   var init = function () {
-    setAddress(window.pin.getCoordinatePinCenter(window.pin.mainPin));
+    deactivateNoticeForm();
+    deactivateFilterForm();
+    setAddress(window.domUtil.getCoordinateCenter(window.pin.mainPin));
   };
 
-  var activate = function () {
-    activateFormElements(adFormElements);
-    activateFormElements(filterFormElements);
+  var activateNoticeForm = function () {
+    setStateFormElements(noticeFormElements, true);
     setAddress(window.pin.getCoordinatePointMainPin());
     setType();
     validateCountGuest();
     noticeForm.classList.remove('ad-form--disabled');
   };
 
-  var deactivate = function () {
-    disableFormElements(adFormElements);
-    disableFormElements(filterFormElements);
+  var deactivateNoticeForm = function () {
+    setStateFormElements(noticeFormElements, false);
     noticeForm.classList.add('ad-form--disabled');
+  };
+
+  var activateFilterForm = function () {
+    setStateFormElements(filterFormElements, true);
+  };
+
+  var deactivateFilterForm = function () {
+    setStateFormElements(filterFormElements, false);
+  };
+
+  var setStateFormElements = function (elements, isActive) {
+    elements.forEach(function (element) {
+      if (isActive) {
+        element.removeAttribute('disabled');
+      } else {
+        element.setAttribute('disabled', '');
+      }
+    });
   };
 
   var setAddress = function (coordinate) {
@@ -40,18 +58,6 @@
     var newValue = typeElementForm.options[typeElementForm.selectedIndex].value;
     priceElementForm.setAttribute('min', window.data.rentTypeMinPrice[newValue]);
     priceElementForm.setAttribute('placeholder', window.data.rentTypeMinPrice[newValue]);
-  };
-
-  var activateFormElements = function (elements) {
-    for (var i = 0; i < elements.length; i++) {
-      elements[i].removeAttribute('disabled');
-    }
-  };
-
-  var disableFormElements = function (elements) {
-    for (var i = 0; i < elements.length; i++) {
-      elements[i].setAttribute('disabled', '');
-    }
   };
 
   timeInElementForm.addEventListener('change', function () {
@@ -73,17 +79,45 @@
   noticeForm.addEventListener('submit', function (evt) {
     var onSuccess = function () {
       noticeForm.reset();
+      filterForm.reset();
+      deactivateNoticeForm();
+      deactivateFilterForm();
+      window.map.deactivate();
+      window.pin.removePinElements();
+      window.card.removeCards();
+      window.domUtil.setCoordinateForStyleElement(window.pin.mainPin, window.pin.initMainPinCoordinate.x, window.pin.initMainPinCoordinate.y);
+      setAddress(window.domUtil.getCoordinateCenter(window.pin.mainPin));
       window.message.showSuccessMessage();
     };
     var onError = function () {
       window.message.showErrorMessage();
     };
+
     evt.preventDefault();
     window.upload.uploadData(new FormData(noticeForm), noticeForm.getAttribute('action'), onSuccess, onError);
   });
 
-  noticeForm.addEventListener('reset', function (_evt) {
+  noticeForm.addEventListener('reset', function () {
+    noticeForm.reset();
+    filterForm.reset();
+    deactivateNoticeForm();
+    deactivateFilterForm();
+    window.map.deactivate();
+    window.pin.removePinElements();
+    window.card.removeCards();
+    window.domUtil.setCoordinateForStyleElement(window.pin.mainPin, window.pin.initMainPinCoordinate.x, window.pin.initMainPinCoordinate.y);
+    setAddress(window.domUtil.getCoordinateCenter(window.pin.mainPin));
+  });
 
+  filterForm.querySelectorAll('input, select').forEach(function (element) {
+    element.addEventListener('change', function (evt) {
+      window.card.removeCards();
+      window.pin.removePinElements();
+
+      if (evt.target.id === 'housing-type') {
+        window.pin.renderPinElements(window.data.getFilteredRentObjects({type: evt.target.value}));
+      }
+    });
   });
 
 
@@ -110,8 +144,8 @@
   init();
 
   w.form = {
-    activate: activate,
-    deactivate: deactivate,
+    activateNoticeForm: activateNoticeForm,
+    activateFilterForm: activateFilterForm,
     setAddress: setAddress,
   };
 })(window);
