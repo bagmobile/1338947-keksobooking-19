@@ -12,18 +12,23 @@
   var rentFeatures = ['wifi', 'dishwasher', 'parking', 'washer', 'elevator', 'conditioner'];
   var rentPhotos = ['http://o0.github.io/assets/images/tokyo/hotel1.jpg', 'http://o0.github.io/assets/images/tokyo/hotel2.jpg', 'http://o0.github.io/assets/images/tokyo/hotel3.jpg'];
 
-  var RentTypes = {
-    'palace': 'Дворец',
-    'flat': 'Квартира',
-    'house': 'Дом',
-    'bungalo': 'Бунгало',
-  };
-
-  var RentTypeMinPrice = {
-    'palace': 10000,
-    'flat': 1000,
-    'house': 5000,
-    'bungalo': 0,
+  var rentType = {
+    'palace': {
+      name: 'Дворец',
+      minPrice: 10000,
+    },
+    'house': {
+      name: 'Дом',
+      minPrice: 5000,
+    },
+    'flat': {
+      name: 'Квартира',
+      minPrice: 1000,
+    },
+    'bungalo': {
+      name: 'Бунгало',
+      minPrice: 0,
+    },
   };
 
   var rentObjects = [];
@@ -36,7 +41,7 @@
       var x = window.mathUtil.generateRangeRandomValue(rect.left, rect.right);
       var y = window.mathUtil.generateRangeRandomValue(rect.top, rect.bottom);
       var roomCount = window.mathUtil.generateRandomValue(MAX_ROOM_COUNT);
-      var rentTypes = Object.keys(RentTypes);
+      var rentTypes = Object.keys(rentType);
 
       result.push({
         'author': {
@@ -67,24 +72,20 @@
   var setDataRentObjects = function (data) {
     rentObjects = data.filter(function (element) {
       return element.hasOwnProperty('offer');
-    });
-    rentObjects.map(function (element, index) {
+    }).map(function (element, index) {
       element.id = index;
       return element;
     });
   };
 
   var getRentObject = function (order) {
-    if (order && (rentObjects[order])) {
-      return rentObjects[order];
-    }
-    return null;
+    return rentObjects[order] ? rentObjects[order] : null;
   };
 
-  var filterRentObject = function (filter) {
+  var filterRentObjects = function (filter) {
     var result = [];
     if (filter.type === 'any') {
-      return rentObjects.slice(-MAX_RENT_OBJECT);
+      return getFilteredRentObjects();
     }
     for (var i = 0; i < rentObjects.length; i++) {
       if (rentObjects[i].offer.type === filter.type) {
@@ -98,19 +99,14 @@
   };
 
   var getFilteredRentObjects = function (filter) {
-    if (filter) {
-      return filterRentObject(filter);
-    }
-    return rentObjects.slice(-MAX_RENT_OBJECT);
+    return (filter) ? filterRentObjects(filter) : rentObjects.slice(-MAX_RENT_OBJECT);
   };
 
-
   w.data = {
-    rentTypes: RentTypes,
-    rentTypeMinPrice: RentTypeMinPrice,
+    rentType: rentType,
     generateRentObjects: generateRentObjects,
     setDataRentObjects: setDataRentObjects,
     getFilteredRentObjects: getFilteredRentObjects,
-    getRentObject: getRentObject
+    getRentObject: getRentObject,
   };
 })(window);

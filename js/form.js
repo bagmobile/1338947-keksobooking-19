@@ -22,7 +22,7 @@
   var activateNoticeForm = function () {
     setStateFormElements(noticeFormElements, true);
     setAddress(window.pin.getCoordinatePointMainPin());
-    setType();
+    onChangeMinPrice();
     validateCountGuest();
     noticeForm.classList.remove('ad-form--disabled');
   };
@@ -54,10 +54,11 @@
     addressElementForm.setAttribute('value', coordinate.x + ', ' + coordinate.y);
   };
 
-  var setType = function () {
+  var onChangeMinPrice = function () {
     var newValue = typeElementForm.options[typeElementForm.selectedIndex].value;
-    priceElementForm.setAttribute('min', window.data.rentTypeMinPrice[newValue]);
-    priceElementForm.setAttribute('placeholder', window.data.rentTypeMinPrice[newValue]);
+    var minPrice = window.data.rentType[newValue].minPrice;
+    priceElementForm.setAttribute('min', minPrice);
+    priceElementForm.setAttribute('placeholder', minPrice);
   };
 
   timeInElementForm.addEventListener('change', function () {
@@ -68,7 +69,7 @@
     timeInElementForm.options.selectedIndex = timeOutElementForm.options.selectedIndex;
   });
 
-  typeElementForm.addEventListener('change', setType);
+  typeElementForm.addEventListener('change', onChangeMinPrice);
 
   [roomNumberElementForm, capacityElementForm].forEach(function (element) {
     element.addEventListener('change', function (evt) {
@@ -109,14 +110,30 @@
     setAddress(window.domUtil.getCoordinateCenter(window.pin.mainPin));
   });
 
+  var onFilterChange = function () {
+  };
+
   filterForm.querySelectorAll('input, select').forEach(function (element) {
-    element.addEventListener('change', function (evt) {
+    element.addEventListener('change', function () {
       window.card.removeCards();
       window.pin.removePinElements();
 
-      if (evt.target.id === 'housing-type') {
-        window.pin.renderPinElements(window.data.getFilteredRentObjects({type: evt.target.value}));
-      }
+      var filterData = {
+        type: filterForm.querySelector('#housing-type').value,
+        price: filterForm.querySelector('#housing-price').value,
+        rooms: filterForm.querySelector('#housing-rooms').value,
+        guests: filterForm.querySelector('#housing-guests').value,
+        features: Array.from(filterForm.querySelectorAll('#housing-features input'))
+          .filter(function (e) {
+            return e.checked;
+          })
+          .map(function (e) {
+            return e.value;
+          }),
+      };
+
+      window.pin.renderPinElements(window.data.getFilteredRentObjects(filterData));
+
     });
   });
 
@@ -147,5 +164,6 @@
     activateNoticeForm: activateNoticeForm,
     activateFilterForm: activateFilterForm,
     setAddress: setAddress,
+    onFilterChange: onFilterChange,
   };
 })(window);

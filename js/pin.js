@@ -31,6 +31,7 @@
     if (activePin) {
       activePin.classList.remove('map__pin--active');
     }
+    console.log(element);
     if (element) {
       element.classList.add('map__pin--active');
     }
