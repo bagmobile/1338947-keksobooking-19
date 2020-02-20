@@ -1,6 +1,7 @@
 'use strict';
 
 (function (w) {
+  var FILTER_UPDATE_TIMEOUT = 500;
   var noticeForm = document.querySelector('form.ad-form');
   var filterForm = document.querySelector('.map__filters');
   var noticeFormElements = noticeForm.querySelectorAll('fieldset');
@@ -115,9 +116,6 @@
 
   filterForm.querySelectorAll('input, select').forEach(function (element) {
     element.addEventListener('change', function () {
-      window.card.removeCards();
-      window.pin.removePinElements();
-
       var filterData = {
         type: filterForm.querySelector('#housing-type').value,
         price: filterForm.querySelector('#housing-price').value,
@@ -131,9 +129,11 @@
             return e.value;
           }),
       };
-
-      window.pin.renderPinElements(window.data.getFilteredRentObjects(filterData));
-
+      window.card.removeCards();
+      window.pin.removePinElements();
+      window.setTimeout(function () {
+        window.pin.renderPinElements(window.data.getFilteredRentObjects(filterData));
+      }, FILTER_UPDATE_TIMEOUT);
     });
   });
 
