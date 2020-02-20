@@ -2,6 +2,7 @@
 
 (function (w) {
   var MAX_RENT_OBJECT = 5;
+  var DEFAULT_FILTER_VALUE = 'any';
   var MIN_PRICE = 0;
   var MAX_PRICE = 10000;
   var MAX_ROOM_COUNT = 3;
@@ -29,6 +30,12 @@
       name: 'Бунгало',
       minPrice: 0,
     },
+  };
+
+  var rangeFilter = {
+    'low': [0, 10000],
+    'middle': [10000, 50000],
+    'high': [50000]
   };
 
   var rentObjects = [];
@@ -82,13 +89,28 @@
     return rentObjects[order] ? rentObjects[order] : null;
   };
 
-  var filterRentObjects = function (filter) {
+  var filterConformity = function (elementValue, filterValue, isNumeric) {
+    return (filterValue === DEFAULT_FILTER_VALUE) || (elementValue === filterValue) || (isNumeric && (elementValue === Number(filterValue)));
+  };
+
+  var filterRange = function (elementValue, filterValue, range) {
+    return (filterValue === DEFAULT_FILTER_VALUE) || ((elementValue >= range[filterValue][0]) && (!range[filterValue][1] || (elementValue < range[filterValue][1])));
+  };
+
+  var filterPlurality = function (elementValue, filterValue) {
+    return Array.isArray(filterValue) ? filterValue.every(function (element) {
+      return Array.isArray(elementValue) ? elementValue.indexOf(element) > -1 : elementValue === element;
+    }) : null;
+  };
+
+  var filterRentObjects = function (formFilter) {
     var result = [];
-    if (filter.type === 'any') {
-      return getFilteredRentObjects();
-    }
     for (var i = 0; i < rentObjects.length; i++) {
-      if (rentObjects[i].offer.type === filter.type) {
+      if (filterConformity(rentObjects[i].offer.type, formFilter.type)
+        && filterRange(rentObjects[i].offer.price, formFilter.price, rangeFilter)
+        && filterConformity(rentObjects[i].offer.rooms, formFilter.rooms, true)
+        && filterConformity(rentObjects[i].offer.guests, formFilter.guests, true)
+        && filterPlurality(rentObjects[i].offer.features, formFilter.features)) {
         result.push(rentObjects[i]);
       }
       if (result.length === MAX_RENT_OBJECT) {
@@ -98,8 +120,8 @@
     return result;
   };
 
-  var getFilteredRentObjects = function (filter) {
-    return (filter) ? filterRentObjects(filter) : rentObjects.slice(-MAX_RENT_OBJECT);
+  var getFilteredRentObjects = function (formFilter) {
+    return (formFilter) ? filterRentObjects(formFilter) : rentObjects.slice(0, MAX_RENT_OBJECT);
   };
 
   w.data = {
