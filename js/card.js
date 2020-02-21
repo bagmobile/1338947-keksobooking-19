@@ -1,14 +1,15 @@
 'use strict';
 
 (function (w) {
+  var map = document.querySelector('.map');
   var mapFiltersContainer = document.querySelector('.map__filters-container');
-  var setRentCardFeatures = function (element, features) {
-    var listElement = element.querySelectorAll('.popup__feature');
-    for (var i = 0; i < listElement.length; i++) {
-      if (features.indexOf(listElement[i].className.replace('popup__feature popup__feature--', '')) === -1) {
-        listElement[i].classList.add('visually-hidden');
+
+  var setCardFeatures = function (element, features) {
+    element.querySelectorAll('.popup__feature').forEach(function (value) {
+      if (features.indexOf(value.className.replace('popup__feature popup__feature--', '')) === -1) {
+        value.classList.add('visually-hidden');
       }
-    }
+    });
   };
 
   var setRentCardPhotos = function (element, photos) {
@@ -16,17 +17,35 @@
     var photosElement = element.querySelector('.popup__photos');
     var photoElement = photosElement.querySelector('.popup__photo');
     var photo = photosElement.removeChild(photoElement);
-    for (var i = 0; i < photos.length; i++) {
+    photos.forEach(function (value) {
       var newPhotoElement = photo.cloneNode(true);
-      newPhotoElement.src = photos[i];
+      newPhotoElement.src = value;
       fragment.appendChild(newPhotoElement);
-    }
+    });
     photosElement.appendChild(fragment);
     photo = null;
   };
 
-  var getRentCardElement = function (rentObject) {
-    var rentCardElement = document.querySelector('.map .map__card[data-rent-order-element = "' + rentObject.id + '"]');
+  var onCloseCard = function (evt) {
+    closeCard(evt);
+  };
+
+  var onShowCard = function (evt) {
+    closeCard();
+    showCard(evt.currentTarget);
+  };
+
+  var onClickPopupClose = function (evt) {
+    window.domUtil.isLeftButtonMouseEvent(evt, onCloseCard);
+  };
+
+  var onKewDownPopupClose = function (evt) {
+    evt.preventDefault();
+    window.domUtil.isEnterEvent(evt, onCloseCard);
+  };
+
+  var getCard = function (rentObject) {
+    var rentCardElement = map.querySelector('.map__card[data-rent-order-element = "' + rentObject.id + '"]');
 
     if (rentCardElement === null) {
       rentCardElement = document.querySelector('#card').content.querySelector('.map__card').cloneNode(true);
@@ -39,41 +58,38 @@
       rentCardElement.querySelector('.popup__text--time').textContent = 'Заезд после ' + rentObject.offer.checkin + ', выезд до ' + rentObject.offer.checkout;
       rentCardElement.querySelector('.popup__description').textContent = rentObject.offer.description;
       rentCardElement.querySelector('.popup__avatar').src = rentObject.author.avatar;
-      setRentCardFeatures(rentCardElement, rentObject.offer.features);
+      setCardFeatures(rentCardElement, rentObject.offer.features);
       setRentCardPhotos(rentCardElement, rentObject.offer.photos);
+      rentCardElement.querySelector('.popup__close').addEventListener('click', onClickPopupClose);
+      rentCardElement.querySelector('.popup__close').addEventListener('keydown', onKewDownPopupClose);
       mapFiltersContainer.insertAdjacentElement('beforebegin', rentCardElement);
     }
     return rentCardElement;
   };
 
-  var closeRentCardElement = function (element) {
-    if (element !== null) {
+  var closeCard = function () {
+    var element = map.querySelector('article.map__card:not(.hidden)');
+    if (element) {
       element.classList.add('hidden');
-      window.pin.resetActivePin();
+      window.pin.setInactivePin();
     }
   };
 
   var removeCards = function () {
-    window.map.map.querySelectorAll('article.map__card').forEach(function (element) {
+    map.querySelectorAll('article.map__card').forEach(function (element) {
+      element.removeEventListener('click', onClickPopupClose);
+      element.removeEventListener('kewdown', onKewDownPopupClose);
       element.remove();
     });
   };
 
-  var showRentCardElement = function (element) {
-    if ((element !== null) && (element.matches('.map__pin:not(.map__pin--main), .map__pin:not(.map__pin--main) > img'))) {
-      var targetElement = element.matches('img') ? element.parentElement : element;
-      var rentObject = window.data.getRentObject(targetElement.dataset.rentOrderElement);
-      if (rentObject) {
-        closeRentCardElement(window.map.map.querySelector('article.map__card:not(.hidden)'));
-        window.pin.resetActivePin(targetElement);
-        getRentCardElement(rentObject).classList.remove('hidden');
-      }
-    }
+  var showCard = function (element) {
+    var rentObject = window.data.getRentObject(element.dataset.rentOrderElement);
+    getCard(rentObject).classList.remove('hidden');
   };
 
   w.card = {
-    closeRentCardElement: closeRentCardElement,
-    showRentCardElement: showRentCardElement,
-    removeCards: removeCards
+    removeCards: removeCards,
+    onShowCard: onShowCard
   };
 })(window);

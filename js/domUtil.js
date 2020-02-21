@@ -14,17 +14,17 @@
 
   var isEscEvent = function (evt, onKeyDown) {
     if (evt.key === ESC_KEY) {
-      onKeyDown();
+      onKeyDown(evt);
     }
   };
   var isEnterEvent = function (evt, onKeyDown) {
     if (evt.key === ENTER_KEY) {
-      onKeyDown();
+      onKeyDown(evt);
     }
   };
   var isLeftButtonMouseEvent = function (evt, onClick) {
     if (evt.button === LEFT_BUTTON) {
-      onClick();
+      onClick(evt);
     }
   };
 

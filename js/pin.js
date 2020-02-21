@@ -10,7 +10,6 @@
     TOP_OFFSET: 84,
   };
 
-
   var map = document.querySelector('.map');
 
   var mapAreaRange = {
@@ -26,22 +25,29 @@
     y: window.domUtil.getNumberCoordinateFromStyleElement(mainPin.style.top)
   };
 
-  var resetActivePin = function (element) {
-    var activePin = map.querySelector('.map__pin--active');
-    if (activePin) {
-      activePin.classList.remove('map__pin--active');
+  var setActivePin = function (element) {
+    element.classList.add('map__pin--active');
+  };
+
+  var setInactivePin = function (element) {
+    var targetElement = element || (element = map.querySelector('.map__pin--active'));
+    if (targetElement) {
+      targetElement.classList.remove('map__pin--active');
     }
-    if (element) {
-      element.classList.add('map__pin--active');
-    }
+  };
+
+  var onClickPin = function (evt) {
+    window.domUtil.isLeftButtonMouseEvent(evt, window.card.onShowCard);
+    setActivePin(evt.currentTarget);
   };
 
   var createPinElement = function (rentObject) {
     var pinElement = templateRentObject.cloneNode(true).querySelector('.map__pin');
-    window.domUtil.setCoordinateForStyleElement(pinElement, rentObject.location.x - PinOffset.LEFT_OFFSET, rentObject.location.y - PinOffset.TOP_OFFSET);
+    pinElement.dataset.rentOrderElement = rentObject.id;
     pinElement.querySelector('img').src = rentObject.author.avatar;
     pinElement.querySelector('img').alt = rentObject.offer.title;
-    pinElement.dataset.rentOrderElement = rentObject.id;
+    window.domUtil.setCoordinateForStyleElement(pinElement, rentObject.location.x - PinOffset.LEFT_OFFSET, rentObject.location.y - PinOffset.TOP_OFFSET);
+    pinElement.addEventListener('click', onClickPin);
     return pinElement;
   };
 
@@ -55,6 +61,7 @@
 
   var removePinElements = function () {
     window.map.map.querySelectorAll('.map__pin:not(.map__pin--main)').forEach(function (element) {
+      element.removeEventListener('click', onClickPin);
       element.remove();
     });
   };
@@ -147,6 +154,6 @@
     getCoordinatePointMainPin: getCoordinatePointMainPin,
     renderPinElements: renderPinElements,
     removePinElements: removePinElements,
-    resetActivePin: resetActivePin
+    setInactivePin: setInactivePin
   };
 })(window);
