@@ -18,21 +18,10 @@
     map.classList.add(MAP_INACTIVE_CLASS);
   };
 
-  map.addEventListener('keydown', function (evt) {
-    /* window.domUtil.isEscEvent(evt, function () {
-       window.card.closeRentCardElement(map.querySelector('article.map__card:not(.hidden)'));
-     });*/
-
-    window.domUtil.isEnterEvent(evt, function () {
-      window.card.showRentCardElement(evt.target);
-    });
-  });
-
   w.map = {
-    map: map,
     isActiveMap: isActiveMap,
     activate: activate,
-    deactivate: deactivate
+    deactivate: deactivate,
   };
 
 })(window);

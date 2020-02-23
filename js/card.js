@@ -2,6 +2,7 @@
 
 (function (w) {
   var map = document.querySelector('.map');
+  var templateCard = document.querySelector('#card');
   var mapFiltersContainer = document.querySelector('.map__filters-container');
 
   var setCardFeatures = function (element, features) {
@@ -23,73 +24,68 @@
       fragment.appendChild(newPhotoElement);
     });
     photosElement.appendChild(fragment);
+    // TODO нужно это делать
     photo = null;
   };
 
-  var onCloseCard = function (evt) {
-    closeCard(evt);
+  var closeCard = function () {
+    var element = map.querySelector('article.map__card');
+    if (element) {
+      element.remove();
+      window.pin.setInactivePin();
+    }
   };
 
-  var onShowCard = function (evt) {
+  var onCloseCard = function () {
     closeCard();
-    showCard(evt.currentTarget);
+  };
+
+  var onShowCard = function (rentObject) {
+    closeCard();
+    showCard(rentObject);
   };
 
   var onClickPopupClose = function (evt) {
     window.domUtil.isLeftButtonMouseEvent(evt, onCloseCard);
   };
 
-  var onKewDownPopupClose = function (evt) {
-    evt.preventDefault();
+  var onKeyDownPopupClose = function (evt) {
+    window.domUtil.isSpaceEvent(evt, function () {
+      evt.preventDefault();
+    });
     window.domUtil.isEnterEvent(evt, onCloseCard);
   };
 
-  var getCard = function (rentObject) {
-    var rentCardElement = map.querySelector('.map__card[data-rent-order-element = "' + rentObject.id + '"]');
-
-    if (rentCardElement === null) {
-      rentCardElement = document.querySelector('#card').content.querySelector('.map__card').cloneNode(true);
-      rentCardElement.dataset.rentOrderElement = rentObject.id;
-      rentCardElement.querySelector('.popup__title').textContent = rentObject.offer.title;
-      rentCardElement.querySelector('.popup__text--address').textContent = rentObject.offer.address;
-      rentCardElement.querySelector('.popup__text--price').textContent = rentObject.offer.price ? rentObject.offer.price + '₽/ночь' : '';
-      rentCardElement.querySelector('.popup__type').textContent = window.data.rentType[rentObject.offer.type].name;
-      rentCardElement.querySelector('.popup__text--capacity').textContent = rentObject.offer.rooms + ' комнат(ы) для ' + rentObject.offer.guests + ' гостей';
-      rentCardElement.querySelector('.popup__text--time').textContent = 'Заезд после ' + rentObject.offer.checkin + ', выезд до ' + rentObject.offer.checkout;
-      rentCardElement.querySelector('.popup__description').textContent = rentObject.offer.description;
-      rentCardElement.querySelector('.popup__avatar').src = rentObject.author.avatar;
-      setCardFeatures(rentCardElement, rentObject.offer.features);
-      setRentCardPhotos(rentCardElement, rentObject.offer.photos);
-      rentCardElement.querySelector('.popup__close').addEventListener('click', onClickPopupClose);
-      rentCardElement.querySelector('.popup__close').addEventListener('keydown', onKewDownPopupClose);
-      mapFiltersContainer.insertAdjacentElement('beforebegin', rentCardElement);
-    }
-    return rentCardElement;
+  var onKeyDownCard = function (evt) {
+    window.domUtil.isEscEvent(evt, onCloseCard);
   };
 
-  var closeCard = function () {
-    var element = map.querySelector('article.map__card:not(.hidden)');
-    if (element) {
-      element.classList.add('hidden');
-      window.pin.setInactivePin();
-    }
-  };
+  var showCard = function (rentObject) {
+    var rentCardElement = templateCard.content.cloneNode(true).querySelector('.map__card');
+    // TODO вынести в отдельные функции
+    rentCardElement.querySelector('.popup__avatar').src = rentObject.author.avatar;
+    rentCardElement.querySelector('.popup__title').textContent = rentObject.offer.title;
+    rentCardElement.querySelector('.popup__text--address').textContent = rentObject.offer.address;
+    rentCardElement.querySelector('.popup__text--price').textContent = rentObject.offer.price ? rentObject.offer.price + '₽/ночь' : '';
+    rentCardElement.querySelector('.popup__type').textContent = window.data.rentType[rentObject.offer.type].name;
+    rentCardElement.querySelector('.popup__text--capacity').textContent = rentObject.offer.rooms + ' комнат(ы) для ' + rentObject.offer.guests + ' гостей';
+    rentCardElement.querySelector('.popup__text--time').textContent = 'Заезд после ' + rentObject.offer.checkin + ', выезд до ' + rentObject.offer.checkout;
+    rentCardElement.querySelector('.popup__description').textContent = rentObject.offer.description;
 
-  var removeCards = function () {
-    map.querySelectorAll('article.map__card').forEach(function (element) {
-      element.removeEventListener('click', onClickPopupClose);
-      element.removeEventListener('kewdown', onKewDownPopupClose);
-      element.remove();
-    });
-  };
+    setCardFeatures(rentCardElement, rentObject.offer.features);
+    setRentCardPhotos(rentCardElement, rentObject.offer.photos);
 
-  var showCard = function (element) {
-    var rentObject = window.data.getRentObject(element.dataset.rentOrderElement);
-    getCard(rentObject).classList.remove('hidden');
+    rentCardElement.querySelector('.popup__close').addEventListener('click', onClickPopupClose);
+    rentCardElement.querySelector('.popup__close').addEventListener('keydown', onKeyDownPopupClose);
+    rentCardElement.addEventListener('keydown', onKeyDownCard);
+
+    mapFiltersContainer.insertAdjacentElement('beforebegin', rentCardElement);
+
+    window.domUtil.setFocusOnBlock(rentCardElement.querySelector('.popup__avatar'));
   };
 
   w.card = {
-    removeCards: removeCards,
-    onShowCard: onShowCard
+    closeCard: closeCard,
+    onShowCard: onShowCard,
   };
 })(window);

@@ -1,7 +1,6 @@
 'use strict';
 
 (function (w) {
-  var FILTER_UPDATE_TIMEOUT = 500;
   var noticeForm = document.querySelector('form.ad-form');
   var filterForm = document.querySelector('.map__filters');
   var noticeFormElements = noticeForm.querySelectorAll('fieldset');
@@ -17,14 +16,30 @@
   var init = function () {
     deactivateNoticeForm();
     deactivateFilterForm();
-    setAddress(window.domUtil.getCoordinateCenter(window.pin.mainPin));
+    setAddress(window.pin.getCoordinateMainPinCenter());
+  };
+
+  var deactivateBooking = function () {
+    noticeForm.reset();
+    filterForm.reset();
+    deactivateNoticeForm();
+    deactivateFilterForm();
+    window.card.closeCard();
+    window.pin.removePinElements();
+    window.pin.setMainPinToCenterMap();
+    setAddress(window.pin.getCoordinateMainPinCenter());
+    window.map.deactivate();
+  };
+
+  var setAddress = function (coordinate) {
+    addressElementForm.setAttribute('value', coordinate.x + ', ' + coordinate.y);
   };
 
   var activateNoticeForm = function () {
     setStateFormElements(noticeFormElements, true);
-    setAddress(window.pin.getCoordinatePointMainPin());
-    onChangeMinPrice();
-    validateCountGuest();
+    setAddress(window.pin.getCoordinateMainPinPoint());
+    changeMinPrice();
+    validateCountGuests();
     noticeForm.classList.remove('ad-form--disabled');
   };
 
@@ -51,16 +66,37 @@
     });
   };
 
-  var setAddress = function (coordinate) {
-    addressElementForm.setAttribute('value', coordinate.x + ', ' + coordinate.y);
+  var validateCountGuests = function () {
+    var VALIDATE_MESSAGE = 'Количесво гостей не соответствует количеству комнат';
+    var validateRuleMapping = {
+      100: [0],
+      1: [1],
+      2: [1, 2],
+      3: [1, 2, 3],
+    };
+    var roomNumberSelectedValue = roomNumberElementForm.options[roomNumberElementForm.selectedIndex].value;
+    var capacitySelectedValue = capacityElementForm.options[capacityElementForm.selectedIndex].value;
+    [roomNumberElementForm, capacityElementForm].forEach(function (element) {
+      element.setCustomValidity('');
+    });
+    for (var i = 0; i < validateRuleMapping[roomNumberSelectedValue].length; i++) {
+      if (validateRuleMapping[roomNumberSelectedValue][i] === Number(capacitySelectedValue)) {
+        return;
+      }
+    }
+    capacityElementForm.setCustomValidity(VALIDATE_MESSAGE);
   };
 
-  var onChangeMinPrice = function () {
+  var changeMinPrice = function () {
     var newValue = typeElementForm.options[typeElementForm.selectedIndex].value;
     var minPrice = window.data.rentType[newValue].minPrice;
     priceElementForm.setAttribute('min', minPrice);
     priceElementForm.setAttribute('placeholder', minPrice);
   };
+
+  typeElementForm.addEventListener('change', function () {
+    changeMinPrice();
+  });
 
   timeInElementForm.addEventListener('change', function () {
     timeOutElementForm.options.selectedIndex = timeInElementForm.options.selectedIndex;
@@ -70,49 +106,27 @@
     timeInElementForm.options.selectedIndex = timeOutElementForm.options.selectedIndex;
   });
 
-  typeElementForm.addEventListener('change', onChangeMinPrice);
-
   [roomNumberElementForm, capacityElementForm].forEach(function (element) {
     element.addEventListener('change', function (evt) {
-      validateCountGuest(evt);
+      validateCountGuests(evt);
     });
   });
 
   noticeForm.addEventListener('submit', function (evt) {
     var onSuccess = function () {
-      noticeForm.reset();
-      filterForm.reset();
-      deactivateNoticeForm();
-      deactivateFilterForm();
-      window.map.deactivate();
-      window.pin.removePinElements();
-      window.card.removeCards();
-      window.domUtil.setCoordinateForStyleElement(window.pin.mainPin, window.pin.initMainPinCoordinate.x, window.pin.initMainPinCoordinate.y);
-      setAddress(window.domUtil.getCoordinateCenter(window.pin.mainPin));
       window.message.showSuccessMessage();
+      deactivateBooking();
     };
     var onError = function () {
       window.message.showErrorMessage();
     };
-
     evt.preventDefault();
-    window.upload.uploadData(new FormData(noticeForm), noticeForm.getAttribute('action'), onSuccess, onError);
+    window.ajax.uploadData(new FormData(noticeForm), noticeForm.getAttribute('action'), onSuccess, onError);
   });
 
   noticeForm.addEventListener('reset', function () {
-    noticeForm.reset();
-    filterForm.reset();
-    deactivateNoticeForm();
-    deactivateFilterForm();
-    window.map.deactivate();
-    window.pin.removePinElements();
-    window.card.removeCards();
-    window.domUtil.setCoordinateForStyleElement(window.pin.mainPin, window.pin.initMainPinCoordinate.x, window.pin.initMainPinCoordinate.y);
-    setAddress(window.domUtil.getCoordinateCenter(window.pin.mainPin));
+    deactivateBooking();
   });
-
-  var onFilterChange = function () {
-  };
 
   filterForm.querySelectorAll('input, select').forEach(function (element) {
     element.addEventListener('change', function () {
@@ -129,34 +143,13 @@
             return e.value;
           }),
       };
-      window.card.removeCards();
+      window.card.closeCard();
       window.pin.removePinElements();
       window.setTimeout(function () {
         window.pin.renderPinElements(window.data.getFilteredRentObjects(filterData));
-      }, FILTER_UPDATE_TIMEOUT);
+      }, window.data.FILTER_UPDATE_TIMEOUT);
     });
   });
-
-
-  var validateCountGuest = function () {
-    var rulesMapping = {
-      100: [0],
-      1: [1],
-      2: [1, 2],
-      3: [1, 2, 3],
-    };
-    var roomNumberSelectedValue = roomNumberElementForm.options[roomNumberElementForm.selectedIndex].value;
-    var capacitySelectedValue = capacityElementForm.options[capacityElementForm.selectedIndex].value;
-    [roomNumberElementForm, capacityElementForm].forEach(function (element) {
-      element.setCustomValidity('');
-    });
-    for (var i = 0; i < rulesMapping[roomNumberSelectedValue].length; i++) {
-      if (rulesMapping[roomNumberSelectedValue][i] === Number(capacitySelectedValue)) {
-        return;
-      }
-    }
-    capacityElementForm.setCustomValidity('Количесво гостей не соответствует количеству комнат');
-  };
 
   init();
 
@@ -164,6 +157,5 @@
     activateNoticeForm: activateNoticeForm,
     activateFilterForm: activateFilterForm,
     setAddress: setAddress,
-    onFilterChange: onFilterChange,
   };
 })(window);
