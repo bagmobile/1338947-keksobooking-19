@@ -18,13 +18,16 @@
     var photosElement = element.querySelector('.popup__photos');
     var photoElement = photosElement.querySelector('.popup__photo');
     var photo = photosElement.removeChild(photoElement);
-    photos.forEach(function (value) {
-      var newPhotoElement = photo.cloneNode(true);
-      newPhotoElement.src = value;
-      fragment.appendChild(newPhotoElement);
-    });
-    photosElement.appendChild(fragment);
-    // TODO нужно это делать
+    if (photos.length > 0) {
+      photos.forEach(function (value) {
+        var newPhotoElement = photo.cloneNode(true);
+        newPhotoElement.src = value;
+        fragment.appendChild(newPhotoElement);
+      });
+      photosElement.appendChild(fragment);
+    } else {
+      window.domUtil.hideEmptyElement(photosElement);
+    }
     photo = null;
   };
 
@@ -62,18 +65,17 @@
 
   var showCard = function (rentObject) {
     var rentCardElement = templateCard.content.cloneNode(true).querySelector('.map__card');
-    // TODO вынести в отдельные функции
-    rentCardElement.querySelector('.popup__avatar').src = rentObject.author.avatar;
-    rentCardElement.querySelector('.popup__title').textContent = rentObject.offer.title;
-    rentCardElement.querySelector('.popup__text--address').textContent = rentObject.offer.address;
-    rentCardElement.querySelector('.popup__text--price').textContent = rentObject.offer.price ? rentObject.offer.price + '₽/ночь' : '';
-    rentCardElement.querySelector('.popup__type').textContent = window.data.rentType[rentObject.offer.type].name;
-    rentCardElement.querySelector('.popup__text--capacity').textContent = rentObject.offer.rooms + ' комнат(ы) для ' + rentObject.offer.guests + ' гостей';
-    rentCardElement.querySelector('.popup__text--time').textContent = 'Заезд после ' + rentObject.offer.checkin + ', выезд до ' + rentObject.offer.checkout;
-    rentCardElement.querySelector('.popup__description').textContent = rentObject.offer.description;
 
-    setCardFeatures(rentCardElement, rentObject.offer.features);
-    setRentCardPhotos(rentCardElement, rentObject.offer.photos);
+    window.domUtil.setAttribute(rentCardElement.querySelector('.popup__avatar'), 'src', rentObject.getAvatar());
+    window.domUtil.setTextContent(rentCardElement.querySelector('.popup__title'), rentObject.getTitle());
+    window.domUtil.setTextContent(rentCardElement.querySelector('.popup__text--address'), rentObject.getAddress());
+    window.domUtil.setTextContent(rentCardElement.querySelector('.popup__text--price'), rentObject.getViewPrice());
+    window.domUtil.setTextContent(rentCardElement.querySelector('.popup__type'), rentObject.getViewType());
+    window.domUtil.setTextContent(rentCardElement.querySelector('.popup__text--capacity'), rentObject.getCapacity());
+    window.domUtil.setTextContent(rentCardElement.querySelector('.popup__text--time'), rentObject.getTime());
+    window.domUtil.setTextContent(rentCardElement.querySelector('.popup__description'), rentObject.getDescription());
+    setCardFeatures(rentCardElement, rentObject.getFeatures());
+    setRentCardPhotos(rentCardElement, rentObject.getPhotos());
 
     rentCardElement.querySelector('.popup__close').addEventListener('click', onClickPopupClose);
     rentCardElement.querySelector('.popup__close').addEventListener('keydown', onKeyDownPopupClose);

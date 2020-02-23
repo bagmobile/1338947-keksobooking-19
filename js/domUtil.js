@@ -66,6 +66,29 @@
     element.focus();
   };
 
+  var hideEmptyElement = function (element) {
+    if (element) {
+      element.classList.add('hidden');
+    }
+  };
+
+  var setAttribute = function (element, attribute, value) {
+    if (element && value) {
+      element.setAttribute(attribute, value);
+    } else {
+      hideEmptyElement(element);
+    }
+  };
+
+  var setTextContent = function (element, value) {
+    if (element && value) {
+      element.textContent = value;
+    } else {
+      hideEmptyElement(element);
+    }
+  };
+
+
   w.domUtil = {
     Coordinate: Coordinate,
     Rect: Rect,
@@ -74,6 +97,9 @@
     isSpaceEvent: isSpaceEvent,
     isLeftButtonMouseEvent: isLeftButtonMouseEvent,
     setFocusOnBlock: setFocusOnBlock,
+    hideEmptyElement: hideEmptyElement,
+    setAttribute: setAttribute,
+    setTextContent: setTextContent,
   };
 
 })(window);

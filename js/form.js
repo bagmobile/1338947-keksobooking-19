@@ -89,7 +89,7 @@
 
   var changeMinPrice = function () {
     var newValue = typeElementForm.options[typeElementForm.selectedIndex].value;
-    var minPrice = window.data.rentType[newValue].minPrice;
+    var minPrice = window.data.getMinPrice(newValue);
     priceElementForm.setAttribute('min', minPrice);
     priceElementForm.setAttribute('placeholder', minPrice);
   };
@@ -128,25 +128,28 @@
     deactivateBooking();
   });
 
+  var getFilterData = function () {
+    return {
+      type: filterForm.querySelector('#housing-type').value,
+      price: filterForm.querySelector('#housing-price').value,
+      rooms: filterForm.querySelector('#housing-rooms').value,
+      guests: filterForm.querySelector('#housing-guests').value,
+      features: Array.from(filterForm.querySelectorAll('#housing-features input'))
+        .filter(function (e) {
+          return e.checked;
+        })
+        .map(function (e) {
+          return e.value;
+        }),
+    };
+  };
+
   filterForm.querySelectorAll('input, select').forEach(function (element) {
     element.addEventListener('change', function () {
-      var filterData = {
-        type: filterForm.querySelector('#housing-type').value,
-        price: filterForm.querySelector('#housing-price').value,
-        rooms: filterForm.querySelector('#housing-rooms').value,
-        guests: filterForm.querySelector('#housing-guests').value,
-        features: Array.from(filterForm.querySelectorAll('#housing-features input'))
-          .filter(function (e) {
-            return e.checked;
-          })
-          .map(function (e) {
-            return e.value;
-          }),
-      };
       window.card.closeCard();
       window.pin.removePinElements();
       window.setTimeout(function () {
-        window.pin.renderPinElements(window.data.getFilteredRentObjects(filterData));
+        window.pin.renderPinElements(window.data.getFilteredRentObjects(getFilterData()));
       }, window.data.FILTER_UPDATE_TIMEOUT);
     });
   });

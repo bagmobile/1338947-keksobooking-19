@@ -55,9 +55,10 @@
 
   var createPinElement = function (rentObject) {
     var pinElement = templatePinElement.cloneNode(true).querySelector('.map__pin');
-    pinElement.querySelector('img').src = rentObject.author.avatar;
-    pinElement.querySelector('img').alt = rentObject.offer.title;
-    new window.domUtil.Coordinate(rentObject.location.x, rentObject.location.y)
+    var location = rentObject.getLocation();
+    pinElement.querySelector('img').src = rentObject.getAvatar();
+    pinElement.querySelector('img').alt = rentObject.getTitle();
+    new window.domUtil.Coordinate(location.x, location.y)
       .setOffset(-PinOffset.LEFT_OFFSET, -PinOffset.TOP_OFFSET)
       .setToStyle(pinElement);
 
