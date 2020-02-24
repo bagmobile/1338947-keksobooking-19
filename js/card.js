@@ -17,8 +17,8 @@
     var fragment = document.createDocumentFragment();
     var photosElement = element.querySelector('.popup__photos');
     var photoElement = photosElement.querySelector('.popup__photo');
-    var photo = photosElement.removeChild(photoElement);
     if (photos.length > 0) {
+      var photo = photosElement.removeChild(photoElement);
       photos.forEach(function (value) {
         var newPhotoElement = photo.cloneNode(true);
         newPhotoElement.src = value;
@@ -28,7 +28,6 @@
     } else {
       window.domUtil.hideEmptyElement(photosElement);
     }
-    photo = null;
   };
 
   var closeCard = function () {

@@ -1,10 +1,10 @@
 'use strict';
 
 (function (w) {
-  var URL = 'https://js.dump.academy/keksobooking/data';
   var MAX_RENT_OBJECT = 5;
   var DEFAULT_FILTER_VALUE = 'any';
-  var FILTER_UPDATE_TIMEOUT = 500;
+  var REN_OBJECT_OFFER_KEY = 'offer';
+  var ERROR_VALID_INPUT_DATA = 'Некорректные данные получены с сервера. Сообщите разработчикам.';
 
   var rentType = {
     'palace': {
@@ -32,70 +32,89 @@
   };
 
   var rentObjects = [];
+  var _isVerifiedData = false;
 
-  /*
-   * TODO Как сериализовать правильно объект? Нужно описать все поля с проверкой? Или может инициализайию проводить
-   *  с тремя основными полями author, offer, location
-   */
   var RentObject = function (object) {
-    this.object = object;
+    this.author = object.author;
+    this.offer = object.offer;
+    this.location = object.location;
+    if (!this.author || !this.location) {
+      throw ERROR_VALID_INPUT_DATA;
+    }
   };
   RentObject.prototype.getAvatar = function () {
-    return this.object['author']['avatar'];
+    return this.author.avatar;
   };
   RentObject.prototype.getTitle = function () {
-    return this.object['offer']['title'];
+    return this.offer.title;
   };
   RentObject.prototype.getAddress = function () {
-    return this.object['offer']['address'];
+    return this.offer.address;
   };
   RentObject.prototype.getPrice = function () {
-    return this.object['offer']['price'];
+    return this.offer.price;
   };
   RentObject.prototype.getViewPrice = function () {
     return this.getPrice() ? this.getPrice() + '₽/ночь' : undefined;
   };
   RentObject.prototype.getType = function () {
-    return this.object['offer']['type'];
+    return this.offer.type;
   };
   RentObject.prototype.getViewType = function () {
     return this.getType() ? rentType[this.getType()].name : undefined;
   };
   RentObject.prototype.getRooms = function () {
-    return this.object['offer']['rooms'];
+    return this.offer.rooms;
   };
   RentObject.prototype.getGuests = function () {
-    return this.object['offer']['guests'];
+    return this.offer.guests;
   };
   RentObject.prototype.getCapacity = function () {
     return this.getRooms() && this.getGuests()
       ? this.getRooms() + ' комнат(ы) для ' + this.getGuests() + ' гостей'
       : undefined;
   };
+  RentObject.prototype.getCheckin = function () {
+    return this.offer.checkin;
+  };
+  RentObject.prototype.getCheckout = function () {
+    return this.offer.checkout;
+  };
   RentObject.prototype.getTime = function () {
-    return this.object['offer']['checkin'] && this.object['offer']['checkout']
-      ? 'Заезд после ' + this.object['offer']['checkin'] + ', выезд до ' + this.object['offer']['checkout']
+    return this.getCheckin() && this.getCheckout()
+      ? 'Заезд после ' + this.getCheckin() + ', выезд до ' + this.getCheckout()
       : undefined;
   };
   RentObject.prototype.getFeatures = function () {
-    return this.object['offer']['features'];
+    return this.offer.features;
   };
   RentObject.prototype.getPhotos = function () {
-    return this.object['offer']['photos'];
+    return this.offer.photos;
   };
   RentObject.prototype.getDescription = function () {
-    return this.object['offer']['description'];
+    return this.offer.description;
   };
   RentObject.prototype.getLocation = function () {
-    return this.object['location'];
+    return this.location;
   };
 
   var setDataRentObjects = function (data) {
-    rentObjects = data.filter(function (element) {
-      return element.hasOwnProperty('offer');
-    }).map(function (element) {
-      return new RentObject(element);
-    });
+    try {
+      _isVerifiedData = false;
+      rentObjects = data.filter(function (element) {
+        return element.hasOwnProperty(REN_OBJECT_OFFER_KEY);
+      }).map(function (element) {
+        return new RentObject(element);
+      });
+      _isVerifiedData = true;
+    } catch (e) {
+      _isVerifiedData = false;
+      window.message.showErrorMessage(e);
+    }
+  };
+
+  var isVerifiedData = function () {
+    return _isVerifiedData;
   };
 
   var getRentObject = function (order) {
@@ -108,40 +127,39 @@
       : rentObjects.slice(0, MAX_RENT_OBJECT);
   };
 
-  // TODO Как всё же быть с фильтрацией, как унифицировать
   var filterRentObjects = function (formFilter) {
-    var result = [];
+    var results = [];
     for (var i = 0; i < rentObjects.length; i++) {
-      if (filterConformity(rentObjects[i].getType(), formFilter.type)
-        && filterRange(rentObjects[i].getPrice(), formFilter.price, rangePriceFilter)
-        && filterConformity(rentObjects[i].getRooms(), formFilter.rooms, true)
-        && filterConformity(rentObjects[i].getGuests(), formFilter.guests, true)
-        && filterPlurality(rentObjects[i].getFeatures(), formFilter.features)) {
-        result.push(rentObjects[i]);
+      if (isFilterConformity(rentObjects[i].getType(), formFilter.type)
+        && isFilterRange(rentObjects[i].getPrice(), formFilter.price, rangePriceFilter)
+        && isFilterConformity(rentObjects[i].getRooms(), formFilter.rooms, true)
+        && isFilterConformity(rentObjects[i].getGuests(), formFilter.guests, true)
+        && isFilterPlurality(rentObjects[i].getFeatures(), formFilter.features)) {
+        results.push(rentObjects[i]);
       }
-      if (result.length === MAX_RENT_OBJECT) {
-        return result;
+      if (results.length === MAX_RENT_OBJECT) {
+        return results;
       }
     }
-    return result;
+    return results;
   };
 
   var getMinPrice = function (index) {
     return rentType[index].minPrice;
   };
 
-  var filterConformity = function (elementValue, filterValue, isNumeric) {
+  var isFilterConformity = function (elementValue, filterValue, isNumeric) {
     return (filterValue === DEFAULT_FILTER_VALUE)
       || (elementValue === filterValue)
       || (isNumeric && (elementValue === Number(filterValue)));
   };
 
-  var filterRange = function (elementValue, filterValue, range) {
+  var isFilterRange = function (elementValue, filterValue, range) {
     return (filterValue === DEFAULT_FILTER_VALUE)
       || ((elementValue >= range[filterValue][0]) && (!range[filterValue][1] || (elementValue < range[filterValue][1])));
   };
 
-  var filterPlurality = function (elementValue, filterValue) {
+  var isFilterPlurality = function (elementValue, filterValue) {
     return Array.isArray(filterValue)
       ? filterValue.every(function (element) {
         return Array.isArray(elementValue) ? elementValue.indexOf(element) > -1 : elementValue === element;
@@ -150,8 +168,7 @@
   };
 
   w.data = {
-    URL: URL,
-    FILTER_UPDATE_TIMEOUT: FILTER_UPDATE_TIMEOUT,
+    isVerifiedData: isVerifiedData,
     getMinPrice: getMinPrice,
     setDataRentObjects: setDataRentObjects,
     getFilteredRentObjects: getFilteredRentObjects,

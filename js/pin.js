@@ -117,19 +117,22 @@
 
   var onActivateMap = function () {
     var onSuccess = function (data) {
-      window.map.activate();
-      window.form.activateNoticeForm();
       if (data.length !== 0) {
         window.data.setDataRentObjects(data);
+        if (!window.data.isVerifiedData()) {
+          return;
+        }
         renderPinElements(window.data.getFilteredRentObjects());
         window.form.activateFilterForm();
       }
+      window.map.activate();
+      window.form.activateNoticeForm();
     };
     var onError = function (error) {
       window.message.showErrorMessage(error);
     };
     if (!window.map.isActiveMap()) {
-      window.ajax.loadData(window.data.URL, onSuccess, onError);
+      window.ajax.loadData(null, onSuccess, onError);
     }
   };
 

@@ -1,13 +1,17 @@
 'use strict';
 
 (function (w) {
+  var URL_LOAD = 'https://js.dump.academy/keksobooking/data';
   var TIMEOUT_UPLOAD = 10000;
   var TIMEOUT_LOAD = 10000;
   var StatusCode = {
     OK: 200,
   };
 
-  var addListeners = function (xhr, onSuccess, onError) {
+  var getXHR = function (onSuccess, onError, timeout) {
+    var xhr = new XMLHttpRequest();
+    xhr.responseType = 'json';
+    xhr.timeout = timeout;
     xhr.addEventListener('load', function () {
       if (xhr.status === StatusCode.OK) {
         onSuccess(xhr.response);
@@ -21,23 +25,17 @@
     xhr.addEventListener('timeout', function () {
       onError('Запрос не успел выполниться за ' + xhr.timeout + 'мс');
     });
-
+    return xhr;
   };
 
   var loadData = function (url, onSuccess, onError) {
-    var xhr = new XMLHttpRequest();
-    xhr.responseType = 'json';
-    xhr.timeout = TIMEOUT_LOAD;
-    addListeners(xhr, onSuccess, onError);
-    xhr.open('GET', url);
+    var xhr = getXHR(onSuccess, onError, TIMEOUT_LOAD);
+    xhr.open('GET', url || URL_LOAD);
     xhr.send();
   };
 
   var uploadData = function (data, url, onSuccess, onError) {
-    var xhr = new XMLHttpRequest();
-    xhr.responseType = 'json';
-    xhr.timeout = TIMEOUT_UPLOAD;
-    addListeners(xhr, onSuccess, onError);
+    var xhr = getXHR(onSuccess, onError, TIMEOUT_UPLOAD);
     xhr.open('POST', url);
     xhr.send(data);
   };
