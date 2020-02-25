@@ -3,15 +3,8 @@
 (function (w) {
   var MAX_RENT_OBJECT = 5;
   var DEFAULT_FILTER_VALUE = 'any';
-  var MIN_PRICE = 0;
-  var MAX_PRICE = 10000;
-  var MAX_ROOM_COUNT = 3;
-  var COEF_GUEST_APART = 1.5;
-  var TEMPLATE_REPLACE = '{{xx}}';
-  var ICON_TEMPLATE_PATH = 'img/avatars/user{{xx}}.png';
-  var rentCheckTimes = ['12:00', '13:00', '14:00'];
-  var rentFeatures = ['wifi', 'dishwasher', 'parking', 'washer', 'elevator', 'conditioner'];
-  var rentPhotos = ['http://o0.github.io/assets/images/tokyo/hotel1.jpg', 'http://o0.github.io/assets/images/tokyo/hotel2.jpg', 'http://o0.github.io/assets/images/tokyo/hotel3.jpg'];
+  var REN_OBJECT_OFFER_KEY = 'offer';
+  var ERROR_VALID_INPUT_DATA = 'Некорректные данные получены с сервера. Сообщите разработчикам.';
 
   var rentType = {
     'palace': {
@@ -32,101 +25,151 @@
     },
   };
 
-  var rangeFilter = {
+  var rangePriceFilter = {
     'low': [0, 10000],
     'middle': [10000, 50000],
-    'high': [50000]
+    'high': [50000],
   };
 
   var rentObjects = [];
+  var _isVerifiedData = false;
 
-  var generateRentObjects = function () {
-    var result = [];
-    var rect = new window.domUtil.Rect(0, 130, 1200, 600);
-
-    for (var i = 0; i < MAX_RENT_OBJECT; i++) {
-      var x = window.mathUtil.generateRangeRandomValue(rect.left, rect.right);
-      var y = window.mathUtil.generateRangeRandomValue(rect.top, rect.bottom);
-      var roomCount = window.mathUtil.generateRandomValue(MAX_ROOM_COUNT);
-      var rentTypes = Object.keys(rentType);
-
-      result.push({
-        'author': {
-          'avatar': ICON_TEMPLATE_PATH.replace(TEMPLATE_REPLACE, '0' + (i + 1)),
-        },
-        'offer': {
-          'title': 'Offer' + (i + 1),
-          'address': x + ', ' + y,
-          'price': window.mathUtil.generateRangeRandomValue(MIN_PRICE, MAX_PRICE),
-          'type': rentTypes[window.mathUtil.generateRandomValue(rentTypes.length)],
-          'rooms': roomCount,
-          'guests': window.mathUtil.generateRangeRandomValue(roomCount, roomCount * COEF_GUEST_APART),
-          'checkin': rentCheckTimes[window.mathUtil.generateRandomValue(rentCheckTimes.length)],
-          'checkout': rentCheckTimes[window.mathUtil.generateRandomValue(rentCheckTimes.length)],
-          'features': window.mathUtil.generateRandomArrayFromArray(rentFeatures),
-          'description': 'Description' + (i + 1),
-          'photos': window.mathUtil.generateRandomArrayFromArray(rentPhotos),
-        },
-        'location': {
-          'x': x,
-          'y': y,
-        },
-      });
+  var RentObject = function (object) {
+    this.author = object.author;
+    this.offer = object.offer;
+    this.location = object.location;
+    if (!this.author || !this.location) {
+      throw ERROR_VALID_INPUT_DATA;
     }
-    return result;
+  };
+  RentObject.prototype.getAvatar = function () {
+    return this.author.avatar;
+  };
+  RentObject.prototype.getTitle = function () {
+    return this.offer.title;
+  };
+  RentObject.prototype.getAddress = function () {
+    return this.offer.address;
+  };
+  RentObject.prototype.getPrice = function () {
+    return this.offer.price;
+  };
+  RentObject.prototype.getViewPrice = function () {
+    return this.getPrice() ? this.getPrice() + '₽/ночь' : undefined;
+  };
+  RentObject.prototype.getType = function () {
+    return this.offer.type;
+  };
+  RentObject.prototype.getViewType = function () {
+    return this.getType() ? rentType[this.getType()].name : undefined;
+  };
+  RentObject.prototype.getRooms = function () {
+    return this.offer.rooms;
+  };
+  RentObject.prototype.getGuests = function () {
+    return this.offer.guests;
+  };
+  RentObject.prototype.getCapacity = function () {
+    return this.getRooms() && this.getGuests()
+      ? this.getRooms() + ' комнат(ы) для ' + this.getGuests() + ' гостей'
+      : undefined;
+  };
+  RentObject.prototype.getCheckin = function () {
+    return this.offer.checkin;
+  };
+  RentObject.prototype.getCheckout = function () {
+    return this.offer.checkout;
+  };
+  RentObject.prototype.getTime = function () {
+    return this.getCheckin() && this.getCheckout()
+      ? 'Заезд после ' + this.getCheckin() + ', выезд до ' + this.getCheckout()
+      : undefined;
+  };
+  RentObject.prototype.getFeatures = function () {
+    return this.offer.features;
+  };
+  RentObject.prototype.getPhotos = function () {
+    return this.offer.photos;
+  };
+  RentObject.prototype.getDescription = function () {
+    return this.offer.description;
+  };
+  RentObject.prototype.getLocation = function () {
+    return this.location;
   };
 
   var setDataRentObjects = function (data) {
-    rentObjects = data.filter(function (element) {
-      return element.hasOwnProperty('offer');
-    }).map(function (element, index) {
-      element.id = index;
-      return element;
-    });
+    try {
+      _isVerifiedData = false;
+      rentObjects = data.filter(function (element) {
+        return element.hasOwnProperty(REN_OBJECT_OFFER_KEY);
+      }).map(function (element) {
+        return new RentObject(element);
+      });
+      _isVerifiedData = true;
+    } catch (e) {
+      _isVerifiedData = false;
+      window.message.showErrorMessage(e);
+    }
+  };
+
+  var isVerifiedData = function () {
+    return _isVerifiedData;
   };
 
   var getRentObject = function (order) {
     return rentObjects[order] ? rentObjects[order] : null;
   };
 
-  var filterConformity = function (elementValue, filterValue, isNumeric) {
-    return (filterValue === DEFAULT_FILTER_VALUE) || (elementValue === filterValue) || (isNumeric && (elementValue === Number(filterValue)));
-  };
-
-  var filterRange = function (elementValue, filterValue, range) {
-    return (filterValue === DEFAULT_FILTER_VALUE) || ((elementValue >= range[filterValue][0]) && (!range[filterValue][1] || (elementValue < range[filterValue][1])));
-  };
-
-  var filterPlurality = function (elementValue, filterValue) {
-    return Array.isArray(filterValue) ? filterValue.every(function (element) {
-      return Array.isArray(elementValue) ? elementValue.indexOf(element) > -1 : elementValue === element;
-    }) : null;
+  var getFilteredRentObjects = function (formFilter) {
+    return (formFilter)
+      ? filterRentObjects(formFilter)
+      : rentObjects.slice(0, MAX_RENT_OBJECT);
   };
 
   var filterRentObjects = function (formFilter) {
-    var result = [];
+    var results = [];
     for (var i = 0; i < rentObjects.length; i++) {
-      if (filterConformity(rentObjects[i].offer.type, formFilter.type)
-        && filterRange(rentObjects[i].offer.price, formFilter.price, rangeFilter)
-        && filterConformity(rentObjects[i].offer.rooms, formFilter.rooms, true)
-        && filterConformity(rentObjects[i].offer.guests, formFilter.guests, true)
-        && filterPlurality(rentObjects[i].offer.features, formFilter.features)) {
-        result.push(rentObjects[i]);
+      if (isFilterConformity(rentObjects[i].getType(), formFilter.type)
+        && isFilterRange(rentObjects[i].getPrice(), formFilter.price, rangePriceFilter)
+        && isFilterConformity(rentObjects[i].getRooms(), formFilter.rooms, true)
+        && isFilterConformity(rentObjects[i].getGuests(), formFilter.guests, true)
+        && isFilterPlurality(rentObjects[i].getFeatures(), formFilter.features)) {
+        results.push(rentObjects[i]);
       }
-      if (result.length === MAX_RENT_OBJECT) {
-        return result;
+      if (results.length === MAX_RENT_OBJECT) {
+        return results;
       }
     }
-    return result;
+    return results;
   };
 
-  var getFilteredRentObjects = function (formFilter) {
-    return (formFilter) ? filterRentObjects(formFilter) : rentObjects.slice(0, MAX_RENT_OBJECT);
+  var getMinPrice = function (index) {
+    return rentType[index].minPrice;
+  };
+
+  var isFilterConformity = function (elementValue, filterValue, isNumeric) {
+    return (filterValue === DEFAULT_FILTER_VALUE)
+      || (elementValue === filterValue)
+      || (isNumeric && (elementValue === Number(filterValue)));
+  };
+
+  var isFilterRange = function (elementValue, filterValue, range) {
+    return (filterValue === DEFAULT_FILTER_VALUE)
+      || ((elementValue >= range[filterValue][0]) && (!range[filterValue][1] || (elementValue < range[filterValue][1])));
+  };
+
+  var isFilterPlurality = function (elementValue, filterValue) {
+    return Array.isArray(filterValue)
+      ? filterValue.every(function (element) {
+        return Array.isArray(elementValue) ? elementValue.indexOf(element) > -1 : elementValue === element;
+      })
+      : false;
   };
 
   w.data = {
-    rentType: rentType,
-    generateRentObjects: generateRentObjects,
+    isVerifiedData: isVerifiedData,
+    getMinPrice: getMinPrice,
     setDataRentObjects: setDataRentObjects,
     getFilteredRentObjects: getFilteredRentObjects,
     getRentObject: getRentObject,

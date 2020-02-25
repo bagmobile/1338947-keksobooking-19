@@ -2,10 +2,21 @@
 
 (function (w) {
   var FILTER_UPDATE_TIMEOUT = 500;
+  var DEFAULT_AVATAR_IMAGE = 'img/muffin-grey.svg';
   var noticeForm = document.querySelector('form.ad-form');
   var filterForm = document.querySelector('.map__filters');
   var noticeFormElements = noticeForm.querySelectorAll('fieldset');
   var filterFormElements = filterForm.querySelectorAll('select, fieldset');
+  var avatarElementForm = noticeForm.querySelector('.ad-form #avatar');
+  var avatarPreviewElementForm = noticeForm.querySelector('.ad-form-header__preview img');
+  var photoContainerElementForm = noticeForm.querySelector('.ad-form__photo-container');
+  var photoContainerPreviewElementForm = photoContainerElementForm.querySelector('.ad-form__photo');
+  var sizeImage = {
+    width: photoContainerPreviewElementForm.offsetWidth,
+    height: photoContainerPreviewElementForm.offsetHeight,
+  };
+  var photoContainerPreviewTemplate = photoContainerPreviewElementForm.cloneNode(true);
+  var photoContainerInputElementForm = photoContainerElementForm.querySelector('.ad-form__input');
   var addressElementForm = noticeForm.querySelector('.ad-form #address');
   var priceElementForm = noticeForm.querySelector('.ad-form #price');
   var typeElementForm = noticeForm.querySelector('.ad-form #type');
@@ -17,14 +28,31 @@
   var init = function () {
     deactivateNoticeForm();
     deactivateFilterForm();
-    setAddress(window.domUtil.getCoordinateCenter(window.pin.mainPin));
+    setAddress(window.pin.getCoordinateMainPinCenter());
+  };
+
+  var deactivateBooking = function () {
+    noticeForm.reset();
+    filterForm.reset();
+    deactivateNoticeForm();
+    deactivateFilterForm();
+    removeNoticeFormPhotos();
+    window.card.closeCard();
+    window.pin.removePinElements();
+    window.pin.setMainPinToCenterMap();
+    setAddress(window.pin.getCoordinateMainPinCenter());
+    window.map.deactivate();
+  };
+
+  var setAddress = function (coordinate) {
+    addressElementForm.setAttribute('value', coordinate.x + ', ' + coordinate.y);
   };
 
   var activateNoticeForm = function () {
     setStateFormElements(noticeFormElements, true);
-    setAddress(window.pin.getCoordinatePointMainPin());
-    onChangeMinPrice();
-    validateCountGuest();
+    setAddress(window.pin.getCoordinateMainPinPoint());
+    changeMinPrice();
+    validateCountGuests();
     noticeForm.classList.remove('ad-form--disabled');
   };
 
@@ -51,95 +79,9 @@
     });
   };
 
-  var setAddress = function (coordinate) {
-    addressElementForm.setAttribute('value', coordinate.x + ', ' + coordinate.y);
-  };
-
-  var onChangeMinPrice = function () {
-    var newValue = typeElementForm.options[typeElementForm.selectedIndex].value;
-    var minPrice = window.data.rentType[newValue].minPrice;
-    priceElementForm.setAttribute('min', minPrice);
-    priceElementForm.setAttribute('placeholder', minPrice);
-  };
-
-  timeInElementForm.addEventListener('change', function () {
-    timeOutElementForm.options.selectedIndex = timeInElementForm.options.selectedIndex;
-  });
-
-  timeOutElementForm.addEventListener('change', function () {
-    timeInElementForm.options.selectedIndex = timeOutElementForm.options.selectedIndex;
-  });
-
-  typeElementForm.addEventListener('change', onChangeMinPrice);
-
-  [roomNumberElementForm, capacityElementForm].forEach(function (element) {
-    element.addEventListener('change', function (evt) {
-      validateCountGuest(evt);
-    });
-  });
-
-  noticeForm.addEventListener('submit', function (evt) {
-    var onSuccess = function () {
-      noticeForm.reset();
-      filterForm.reset();
-      deactivateNoticeForm();
-      deactivateFilterForm();
-      window.map.deactivate();
-      window.pin.removePinElements();
-      window.card.removeCards();
-      window.domUtil.setCoordinateForStyleElement(window.pin.mainPin, window.pin.initMainPinCoordinate.x, window.pin.initMainPinCoordinate.y);
-      setAddress(window.domUtil.getCoordinateCenter(window.pin.mainPin));
-      window.message.showSuccessMessage();
-    };
-    var onError = function () {
-      window.message.showErrorMessage();
-    };
-
-    evt.preventDefault();
-    window.upload.uploadData(new FormData(noticeForm), noticeForm.getAttribute('action'), onSuccess, onError);
-  });
-
-  noticeForm.addEventListener('reset', function () {
-    noticeForm.reset();
-    filterForm.reset();
-    deactivateNoticeForm();
-    deactivateFilterForm();
-    window.map.deactivate();
-    window.pin.removePinElements();
-    window.card.removeCards();
-    window.domUtil.setCoordinateForStyleElement(window.pin.mainPin, window.pin.initMainPinCoordinate.x, window.pin.initMainPinCoordinate.y);
-    setAddress(window.domUtil.getCoordinateCenter(window.pin.mainPin));
-  });
-
-  var onFilterChange = function () {
-  };
-
-  filterForm.querySelectorAll('input, select').forEach(function (element) {
-    element.addEventListener('change', function () {
-      var filterData = {
-        type: filterForm.querySelector('#housing-type').value,
-        price: filterForm.querySelector('#housing-price').value,
-        rooms: filterForm.querySelector('#housing-rooms').value,
-        guests: filterForm.querySelector('#housing-guests').value,
-        features: Array.from(filterForm.querySelectorAll('#housing-features input'))
-          .filter(function (e) {
-            return e.checked;
-          })
-          .map(function (e) {
-            return e.value;
-          }),
-      };
-      window.card.removeCards();
-      window.pin.removePinElements();
-      window.setTimeout(function () {
-        window.pin.renderPinElements(window.data.getFilteredRentObjects(filterData));
-      }, FILTER_UPDATE_TIMEOUT);
-    });
-  });
-
-
-  var validateCountGuest = function () {
-    var rulesMapping = {
+  var validateCountGuests = function () {
+    var VALIDATE_MESSAGE = 'Количесво гостей не соответствует количеству комнат';
+    var validateRuleMapping = {
       100: [0],
       1: [1],
       2: [1, 2],
@@ -150,13 +92,108 @@
     [roomNumberElementForm, capacityElementForm].forEach(function (element) {
       element.setCustomValidity('');
     });
-    for (var i = 0; i < rulesMapping[roomNumberSelectedValue].length; i++) {
-      if (rulesMapping[roomNumberSelectedValue][i] === Number(capacitySelectedValue)) {
+    for (var i = 0; i < validateRuleMapping[roomNumberSelectedValue].length; i++) {
+      if (validateRuleMapping[roomNumberSelectedValue][i] === Number(capacitySelectedValue)) {
         return;
       }
     }
-    capacityElementForm.setCustomValidity('Количесво гостей не соответствует количеству комнат');
+    capacityElementForm.setCustomValidity(VALIDATE_MESSAGE);
   };
+
+  var changeMinPrice = function () {
+    var newValue = typeElementForm.options[typeElementForm.selectedIndex].value;
+    var minPrice = window.data.getMinPrice(newValue);
+    priceElementForm.setAttribute('min', minPrice);
+    priceElementForm.setAttribute('placeholder', minPrice);
+  };
+
+  typeElementForm.addEventListener('change', function () {
+    changeMinPrice();
+  });
+
+  timeInElementForm.addEventListener('change', function () {
+    timeOutElementForm.options.selectedIndex = timeInElementForm.options.selectedIndex;
+  });
+
+  timeOutElementForm.addEventListener('change', function () {
+    timeInElementForm.options.selectedIndex = timeOutElementForm.options.selectedIndex;
+  });
+
+  [roomNumberElementForm, capacityElementForm].forEach(function (element) {
+    element.addEventListener('change', function (evt) {
+      validateCountGuests(evt);
+    });
+  });
+
+  avatarElementForm.addEventListener('change', function (evt) {
+    window.fileReader.updateImages([avatarPreviewElementForm], evt.target.files);
+  });
+
+  var removeNoticeFormPhotos = function () {
+    avatarPreviewElementForm.src = DEFAULT_AVATAR_IMAGE;
+    photoContainerElementForm.querySelectorAll('.ad-form__photo').forEach(function (element) {
+      element.remove();
+    });
+  };
+
+  photoContainerInputElementForm.addEventListener('change', function (evt) {
+    if (evt.target.files.length > 0) {
+      var fragment = document.createDocumentFragment();
+      removeNoticeFormPhotos();
+      Array.from(evt.target.files).map(function () {
+        var newPhotoElement = photoContainerPreviewTemplate.cloneNode(true);
+        var img = document.createElement('img');
+        img.width = sizeImage.width;
+        img.height = sizeImage.height;
+        newPhotoElement.appendChild(img);
+        fragment.appendChild(newPhotoElement);
+      });
+      photoContainerElementForm.appendChild(fragment);
+      window.fileReader.updateImages(photoContainerElementForm.querySelectorAll('.ad-form__photo img'), evt.target.files);
+    }
+  });
+
+  noticeForm.addEventListener('submit', function (evt) {
+    var onSuccess = function () {
+      window.message.showSuccessMessage();
+      deactivateBooking();
+    };
+    var onError = function () {
+      window.message.showErrorMessage();
+    };
+    evt.preventDefault();
+    window.ajax.uploadData(new FormData(noticeForm), noticeForm.getAttribute('action'), onSuccess, onError);
+  });
+
+  noticeForm.addEventListener('reset', function () {
+    deactivateBooking();
+  });
+
+  var getFilterData = function () {
+    return {
+      type: filterForm.querySelector('#housing-type').value,
+      price: filterForm.querySelector('#housing-price').value,
+      rooms: filterForm.querySelector('#housing-rooms').value,
+      guests: filterForm.querySelector('#housing-guests').value,
+      features: Array.from(filterForm.querySelectorAll('#housing-features input'))
+        .filter(function (e) {
+          return e.checked;
+        })
+        .map(function (e) {
+          return e.value;
+        }),
+    };
+  };
+
+  filterForm.querySelectorAll('input, select').forEach(function (element) {
+    element.addEventListener('change', function () {
+      window.card.closeCard();
+      window.pin.removePinElements();
+      window.setTimeout(function () {
+        window.pin.renderPinElements(window.data.getFilteredRentObjects(getFilterData()));
+      }, FILTER_UPDATE_TIMEOUT);
+    });
+  });
 
   init();
 
@@ -164,6 +201,5 @@
     activateNoticeForm: activateNoticeForm,
     activateFilterForm: activateFilterForm,
     setAddress: setAddress,
-    onFilterChange: onFilterChange,
   };
 })(window);
