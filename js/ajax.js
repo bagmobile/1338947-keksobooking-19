@@ -1,9 +1,15 @@
 'use strict';
 
 (function (w) {
+
   var URL_LOAD = 'https://js.dump.academy/keksobooking/data';
   var TIMEOUT_UPLOAD = 10000;
   var TIMEOUT_LOAD = 10000;
+
+  var HttpMethod = {
+    POST: 'POST',
+    GET: 'GET'
+  };
   var StatusCode = {
     OK: 200,
   };
@@ -30,13 +36,13 @@
 
   var loadData = function (url, onSuccess, onError) {
     var xhr = getXHR(onSuccess, onError, TIMEOUT_LOAD);
-    xhr.open('GET', url || URL_LOAD);
+    xhr.open(HttpMethod.GET, url || URL_LOAD);
     xhr.send();
   };
 
   var uploadData = function (data, url, onSuccess, onError) {
     var xhr = getXHR(onSuccess, onError, TIMEOUT_UPLOAD);
-    xhr.open('POST', url);
+    xhr.open(HttpMethod.POST, url);
     xhr.send(data);
   };
 
@@ -44,4 +50,5 @@
     loadData: loadData,
     uploadData: uploadData,
   };
+
 })(window);

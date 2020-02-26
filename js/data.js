@@ -1,6 +1,7 @@
 'use strict';
 
 (function (w) {
+
   var MAX_RENT_OBJECT = 5;
   var DEFAULT_FILTER_VALUE = 'any';
   var REN_OBJECT_OFFER_KEY = 'offer';
@@ -130,11 +131,7 @@
   var filterRentObjects = function (formFilter) {
     var results = [];
     for (var i = 0; i < rentObjects.length; i++) {
-      if (isFilterConformity(rentObjects[i].getType(), formFilter.type)
-        && isFilterRange(rentObjects[i].getPrice(), formFilter.price, rangePriceFilter)
-        && isFilterConformity(rentObjects[i].getRooms(), formFilter.rooms, true)
-        && isFilterConformity(rentObjects[i].getGuests(), formFilter.guests, true)
-        && isFilterPlurality(rentObjects[i].getFeatures(), formFilter.features)) {
+      if (isFilterRentObject(rentObjects[i], formFilter)) {
         results.push(rentObjects[i]);
       }
       if (results.length === MAX_RENT_OBJECT) {
@@ -142,6 +139,14 @@
       }
     }
     return results;
+  };
+
+  var isFilterRentObject = function (rentObject, formFilter) {
+    return isFilterConformity(rentObject.getType(), formFilter.type)
+      && isFilterRange(rentObject.getPrice(), formFilter.price, rangePriceFilter)
+      && isFilterConformity(rentObject.getRooms(), formFilter.rooms, true)
+      && isFilterConformity(rentObject.getGuests(), formFilter.guests, true)
+      && isFilterPlurality(rentObject.getFeatures(), formFilter.features);
   };
 
   var getMinPrice = function (index) {

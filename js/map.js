@@ -1,7 +1,9 @@
 'use strict';
 
 (function (w) {
+
   var MAP_INACTIVE_CLASS = 'map--faded';
+
   var map = document.querySelector('.map');
 
   var isActiveMap = function () {

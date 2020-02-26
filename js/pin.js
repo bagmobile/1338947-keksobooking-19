@@ -1,6 +1,7 @@
 'use strict';
 
 (function (w) {
+
   var PinRangeY = {
     MIN: 130,
     MAX: 630,
@@ -151,4 +152,5 @@
     removePinElements: removePinElements,
     setInactivePin: setInactivePin,
   };
+
 })(window);

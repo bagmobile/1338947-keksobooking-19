@@ -1,6 +1,7 @@
 'use strict';
 
 (function (w) {
+
   var templatePlace = document.querySelector('main');
   var successMessageElement = document.querySelector('#success').content.cloneNode(true).querySelector('.success');
   var errorMessageElement = document.querySelector('#error').content.cloneNode(true).querySelector('.error');

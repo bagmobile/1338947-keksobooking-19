@@ -14,9 +14,10 @@
         reader.readAsDataURL(file);
       }
     });
-
   };
+
   w.fileReader = {
     updateImages: updateImages,
   };
+
 })(window);

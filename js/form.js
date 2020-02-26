@@ -3,6 +3,7 @@
 (function (w) {
   var FILTER_UPDATE_TIMEOUT = 500;
   var DEFAULT_AVATAR_IMAGE = 'img/muffin-grey.svg';
+
   var noticeForm = document.querySelector('form.ad-form');
   var filterForm = document.querySelector('.map__filters');
   var noticeFormElements = noticeForm.querySelectorAll('fieldset');
@@ -52,7 +53,7 @@
     setStateFormElements(noticeFormElements, true);
     setAddress(window.pin.getCoordinateMainPinPoint());
     changeMinPrice();
-    validateCountGuests();
+    //validateCapacityGuests();
     noticeForm.classList.remove('ad-form--disabled');
   };
 
@@ -79,25 +80,42 @@
     });
   };
 
-  var validateCountGuests = function () {
-    var VALIDATE_MESSAGE = 'Количесво гостей не соответствует количеству комнат';
-    var validateRuleMapping = {
+  var getAcceptCapacityGuests = function (countRoom) {
+    var roomToCapacityMapping = {
       100: [0],
       1: [1],
       2: [1, 2],
       3: [1, 2, 3],
     };
-    var roomNumberSelectedValue = roomNumberElementForm.options[roomNumberElementForm.selectedIndex].value;
-    var capacitySelectedValue = capacityElementForm.options[capacityElementForm.selectedIndex].value;
-    [roomNumberElementForm, capacityElementForm].forEach(function (element) {
-      element.setCustomValidity('');
-    });
-    for (var i = 0; i < validateRuleMapping[roomNumberSelectedValue].length; i++) {
-      if (validateRuleMapping[roomNumberSelectedValue][i] === Number(capacitySelectedValue)) {
-        return;
+    return roomToCapacityMapping[countRoom];
+  };
+
+  var isAcceptCapacityGuests = function (countRoom, guests) {
+    return guests.indexOf(Number(countRoom)) > -1;
+  };
+
+  var updateStateCapacityElementForm = function () {
+    var guests = getAcceptCapacityGuests(roomNumberElementForm.options[roomNumberElementForm.selectedIndex].value);
+    Array.from(capacityElementForm.options).forEach(function (element) {
+      if (guests.indexOf(Number(element.value)) > -1) {
+        element.removeAttribute('disabled');
+      } else {
+        element.setAttribute('disabled', '');
       }
+    });
+  };
+
+  var validateCapacityGuests = function () {
+    var VALIDATE_MESSAGE = 'Количесво гостей не соответствует количеству комнат';
+    var countRoom = roomNumberElementForm.options[roomNumberElementForm.selectedIndex].value;
+    var guests = getAcceptCapacityGuests(countRoom);
+
+    capacityElementForm.setCustomValidity('');
+
+    if (!isAcceptCapacityGuests(countRoom, guests)) {
+
+      capacityElementForm.setCustomValidity(VALIDATE_MESSAGE);
     }
-    capacityElementForm.setCustomValidity(VALIDATE_MESSAGE);
   };
 
   var changeMinPrice = function () {
@@ -119,10 +137,9 @@
     timeInElementForm.options.selectedIndex = timeOutElementForm.options.selectedIndex;
   });
 
-  [roomNumberElementForm, capacityElementForm].forEach(function (element) {
-    element.addEventListener('change', function (evt) {
-      validateCountGuests(evt);
-    });
+  roomNumberElementForm.addEventListener('change', function () {
+    validateCapacityGuests();
+    updateStateCapacityElementForm();
   });
 
   avatarElementForm.addEventListener('change', function (evt) {
@@ -158,9 +175,11 @@
       window.message.showSuccessMessage();
       deactivateBooking();
     };
+
     var onError = function () {
       window.message.showErrorMessage();
     };
+
     evt.preventDefault();
     window.ajax.uploadData(new FormData(noticeForm), noticeForm.getAttribute('action'), onSuccess, onError);
   });
@@ -202,4 +221,5 @@
     activateFilterForm: activateFilterForm,
     setAddress: setAddress,
   };
+
 })(window);

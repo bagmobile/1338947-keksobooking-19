@@ -1,11 +1,11 @@
 'use strict';
 
 (function (w) {
+
   var ESC_KEY = 'Escape';
   var ENTER_KEY = 'Enter';
   var SPACE_KEY = ' ';
   var LEFT_BUTTON = 0;
-
 
   var Coordinate = function (x, y) {
     this.x = x;
