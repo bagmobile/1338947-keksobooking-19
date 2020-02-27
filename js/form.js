@@ -1,6 +1,7 @@
 'use strict';
 
 (function (w) {
+
   var FILTER_UPDATE_TIMEOUT = 500;
   var DEFAULT_AVATAR_IMAGE = 'img/muffin-grey.svg';
 
@@ -53,7 +54,7 @@
     setStateFormElements(noticeFormElements, true);
     setAddress(window.pin.getCoordinateMainPinPoint());
     changeMinPrice();
-    //validateCapacityGuests();
+    checkCapacityGuests(true);
     noticeForm.classList.remove('ad-form--disabled');
   };
 
@@ -87,15 +88,10 @@
       2: [1, 2],
       3: [1, 2, 3],
     };
-    return roomToCapacityMapping[countRoom];
+    return (Object.keys(roomToCapacityMapping).indexOf(countRoom) > -1) ? roomToCapacityMapping[countRoom] : [];
   };
 
-  var isAcceptCapacityGuests = function (countRoom, guests) {
-    return guests.indexOf(Number(countRoom)) > -1;
-  };
-
-  var updateStateCapacityElementForm = function () {
-    var guests = getAcceptCapacityGuests(roomNumberElementForm.options[roomNumberElementForm.selectedIndex].value);
+  var updateStateCapacityElementForm = function (guests) {
     Array.from(capacityElementForm.options).forEach(function (element) {
       if (guests.indexOf(Number(element.value)) > -1) {
         element.removeAttribute('disabled');
@@ -105,15 +101,19 @@
     });
   };
 
-  var validateCapacityGuests = function () {
+  var checkCapacityGuests = function (isRoomChangeAction) {
     var VALIDATE_MESSAGE = 'Количесво гостей не соответствует количеству комнат';
+
     var countRoom = roomNumberElementForm.options[roomNumberElementForm.selectedIndex].value;
+    var capacityGuests = Number(capacityElementForm.options[capacityElementForm.selectedIndex].value);
     var guests = getAcceptCapacityGuests(countRoom);
 
     capacityElementForm.setCustomValidity('');
+    if (isRoomChangeAction) {
+      updateStateCapacityElementForm(guests);
+    }
 
-    if (!isAcceptCapacityGuests(countRoom, guests)) {
-
+    if (guests.indexOf(capacityGuests) === -1) {
       capacityElementForm.setCustomValidity(VALIDATE_MESSAGE);
     }
   };
@@ -137,9 +137,10 @@
     timeInElementForm.options.selectedIndex = timeOutElementForm.options.selectedIndex;
   });
 
-  roomNumberElementForm.addEventListener('change', function () {
-    validateCapacityGuests();
-    updateStateCapacityElementForm();
+  [roomNumberElementForm, capacityElementForm].forEach(function (element) {
+    element.addEventListener('change', function (evt) {
+      checkCapacityGuests(evt.target === roomNumberElementForm);
+    });
   });
 
   avatarElementForm.addEventListener('change', function (evt) {
